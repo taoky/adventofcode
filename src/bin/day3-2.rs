@@ -25,6 +25,7 @@ fn main() {
         hashsets.push(hashset);
 
         if idx % 3 == 2 {
+            // https://github.com/rust-lang/rfcs/issues/2023#issuecomment-739483074
             let intersection = hashsets
                 .iter()
                 .skip(1)
