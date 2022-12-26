@@ -186,6 +186,7 @@ fn main() {
             wind: seq[seq_ptr % seq.len()],
             current_rock: rock_id % 5,
         };
+        let rock_id = rock_id + 1;  // fix rock_id off-by-one error
         if height > CYCLE_LEN && states_hashmap.contains_key(&state) {
             println!(
                 "current rock: {}, current height: {}, value: {:?}",
@@ -199,7 +200,7 @@ fn main() {
                     (target - snapshot_rock) / (rock_id - snapshot_rock)
                         * (height - snapshot_height) as usize
                         + snapshot_height as usize
-                        - 1 // why?
+                        // -1 // ok rock_id starts from 0...
                 );
                 break;
             }
