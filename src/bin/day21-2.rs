@@ -137,9 +137,10 @@ fn main() {
         }
     }
 
+    // assuming that only one expression is unknown
     let eq = match &map["root"] {
         Expression::Add(left, right) => {
-            let lval = calc(&map, &left);
+            let lval = calc(&map, left);
             match lval {
                 Some(lval) => (lval, right),
                 None => (calc(&map, right).unwrap(), left),
