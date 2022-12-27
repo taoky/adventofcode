@@ -27,9 +27,10 @@ impl Debug for Block {
 #[derive(Default, Debug)]
 struct Map {
     map: Vec<Vec<Block>>,
+    width: usize,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Copy, Clone)]
 enum Direction {
     Up,
     Down,
@@ -47,6 +48,44 @@ struct State {
 impl Map {
     fn fetch(&self, x: isize, y: isize) -> Block {
         self.map[x as usize][y as usize]
+    }
+
+    fn void_transfer(&self, x: isize, y: isize, dir: Direction) -> (isize, isize) {
+        let height = self.map.len() as isize;
+        let width = self.width as isize;
+        assert!(x < 0 || x >= height || y < 0 || y >= width || self.fetch(x, y) == Block::Void);
+        let mut x = x;
+        let mut y = y;
+
+        loop {
+            match dir {
+                Direction::Up => {
+                    x = (x + height - 1) % height;
+                    if self.fetch(x, y) != Block::Void {
+                        break;
+                    }
+                }
+                Direction::Down => {
+                    x = (x + 1) % height;
+                    if self.fetch(x, y) != Block::Void {
+                        break;
+                    }
+                }
+                Direction::Left => {
+                    y = (y + width - 1) % width;
+                    if self.fetch(x, y) != Block::Void {
+                        break;
+                    }
+                }
+                Direction::Right => {
+                    y = (y + 1) % width;
+                    if self.fetch(x, y) != Block::Void {
+                        break;
+                    }
+                }
+            }
+        }
+        (x as isize, y as isize)
     }
 }
 
@@ -103,8 +142,10 @@ fn main() {
         }
         map.map.push(row);
     }
-    println!("{:?}", instructions);
-    println!("{:?}", map);
+    map.width = width;
+
+    // println!("{:?}", instructions);
+    // println!("{:?}", map);
 
     let mut start_point = (0, 0);
     for i in 0..map.map.len() {
@@ -120,7 +161,7 @@ fn main() {
             break;
         }
     }
-    println!("{:?}", start_point);
+    // println!("{:?}", start_point);
 
     let mut state = State {
         coord: start_point,
@@ -128,6 +169,7 @@ fn main() {
     };
 
     for inst in instructions {
+        println!("{:?}", inst);
         match inst {
             Instruction::Steps(num) => {
                 for _ in 0..num {
@@ -137,13 +179,15 @@ fn main() {
                         Direction::Left => (state.coord.0, state.coord.1 - 1),
                         Direction::Right => (state.coord.0, state.coord.1 + 1),
                     };
-                    if new_coord.0 < 0
+                    let new_coord = if new_coord.0 < 0
                         || new_coord.1 < 0
                         || new_coord.0 >= map.map.len() as isize
                         || new_coord.1 >= map.map[0].len() as isize
                     {
-                        continue;
-                    }
+                        map.void_transfer(new_coord.0, new_coord.1, state.direction)
+                    } else {
+                        new_coord
+                    };
                     match map.fetch(new_coord.0, new_coord.1) {
                         Block::Open => {
                             state.coord = new_coord;
@@ -152,10 +196,26 @@ fn main() {
                             break;
                         }
                         Block::Void => {
-                            unimplemented!();
+                            let new_coord =
+                                map.void_transfer(new_coord.0, new_coord.1, state.direction);
+                            println!(
+                                "transferred from {:?} to {:?} dir={:?}",
+                                state.coord, new_coord, state.direction
+                            );
+                            match map.fetch(new_coord.0, new_coord.1) {
+                                Block::Open => {
+                                    state.coord = new_coord;
+                                }
+                                Block::Wall => {
+                                    break;
+                                }
+                                Block::Void => {
+                                    panic!("void transfer failed");
+                                }
+                            }
                         }
                     }
-                    println!("{:?}", state);
+                    // println!("{:?}", state);
                 }
             }
             Instruction::Clockwise => match state.direction {
@@ -188,4 +248,16 @@ fn main() {
             },
         }
     }
+
+    println!(
+        "{:?}",
+        1000 * (state.coord.0 + 1)
+            + 4 * (state.coord.1 + 1)
+            + match state.direction {
+                Direction::Up => 3,
+                Direction::Down => 1,
+                Direction::Left => 2,
+                Direction::Right => 0,
+            }
+    );
 }
