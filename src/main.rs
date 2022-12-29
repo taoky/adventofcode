@@ -38,11 +38,11 @@ enum Mode {
 const CGROUP_DIR: &str = "/sys/fs/cgroup/adventofcode-2022";
 
 fn sudo(script: &str, explanation: &str) -> Result<()> {
-    print!("{}", explanation);
-    println!(" Thus the following script will be run with bash by sudo:");
-    println!("{}", script);
-    print!("Continue? [y/N] ");
-    std::io::stdout().flush()?;
+    eprint!("{}", explanation);
+    eprintln!(" Thus the following script will be run with bash by sudo:");
+    eprintln!("{}", script);
+    eprint!("Continue? [y/N] ");
+
     let mut input = String::new();
     std::io::stdin().read_line(&mut input)?;
     if input.trim() == "y" {
@@ -61,14 +61,14 @@ fn sudo(script: &str, explanation: &str) -> Result<()> {
 
 macro_rules! mem_failed {
     ($memory: expr) => {
-        println!("Failed to configure cgroup: above command execution failed.");
-        println!("Will not calculate memory usage.");
+        eprintln!("Failed to configure cgroup: above command execution failed.");
+        eprintln!("Will not calculate memory usage.");
         $memory = false;
     };
     ($memory: expr, $err: expr) => {
-        println!("Failed to configure cgroup: {}", $err);
-        println!("{}", $err.backtrace());
-        println!("Will not calculate memory usage.");
+        eprintln!("Failed to configure cgroup: {}", $err);
+        eprintln!("{}", $err.backtrace());
+        eprintln!("Will not calculate memory usage.");
         $memory = false;
     };
 }
@@ -163,6 +163,18 @@ rmdir /sys/fs/cgroup/adventofcode-2022
     sudo(script.as_str(), "This program needs to cleanup cgroupv2 (created at the beginning). This requires root permission.")
 }
 
+fn humanize(size: usize) -> String {
+    let mut size = size as f64;
+    let suffix = ["B", "KiB", "MiB", "GiB"];
+    for unit in suffix {
+        if size < 1024.0 {
+            return format!("{:.3}{}", size, unit);
+        }
+        size /= 1024.0;
+    }
+    format!("{:.1}{}", size, "TiB")
+}
+
 fn main() {
     let mut cli = Args::parse();
 
@@ -228,12 +240,13 @@ fn main() {
         if !res.success() {
             panic!("Day {}-{} failed", day, part);
         }
-        let mut result = format!(
-            "Day {}-{}: {}ms",
-            day,
-            part,
-            start_time.elapsed().as_millis()
-        );
+        let elapsed = start_time.elapsed();
+        let elapsed = if elapsed.as_millis() > 0 {
+            format!("{}ms", elapsed.as_millis())
+        } else {
+            format!("{}μs", elapsed.as_micros())
+        };
+        let mut result = format!("Day {}-{}: {}", day, part, elapsed);
         if cli.memory {
             let mut peak = String::new();
             std::fs::File::open(
@@ -244,7 +257,7 @@ fn main() {
             .unwrap()
             .read_to_string(&mut peak)
             .unwrap();
-            result += format!(", {} bytes ", peak.trim()).as_str();
+            result += format!(", {}", humanize(peak.trim().parse().unwrap())).as_str();
         }
         println!("{}", result);
     }
@@ -257,7 +270,7 @@ fn main() {
                 rust_cleanup_cgroup()
             }
         } {
-            println!("Failed to cleanup cgroupv2: {}", e);
+            eprintln!("Failed to cleanup cgroupv2: {}", e);
         }
     }
 }
