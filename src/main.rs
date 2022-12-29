@@ -148,8 +148,7 @@ echo {} > /sys/fs/cgroup/adventofcode-2022/day0/cgroup.procs
 }
 
 fn sudo_cleanup_cgroup() -> Result<()> {
-    let script = format!(
-        r#"
+    let script = r#"
 set -ex
 # move current process to root cgroup tree node
 PIDS=$(</sys/fs/cgroup/adventofcode-2022/day0/cgroup.procs)
@@ -158,9 +157,8 @@ for i in $PIDS; do
 done
 rmdir /sys/fs/cgroup/adventofcode-2022/day*
 rmdir /sys/fs/cgroup/adventofcode-2022
-"#
-    );
-    sudo(script.as_str(), "This program needs to cleanup cgroupv2 (created at the beginning). This requires root permission.")
+"#;
+    sudo(script, "This program needs to cleanup cgroupv2 (created at the beginning). This requires root permission.")
 }
 
 fn humanize(size: usize) -> String {
