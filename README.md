@@ -1,6 +1,6 @@
 # adventofcode
 
-My solutions for Advent Of Code 2022 challenges.
+My solutions for [Advent Of Code 2022](https://adventofcode.com/2022/) challenges.
 
 - Rust
 - No third-patry crates for challenge solutions
