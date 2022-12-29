@@ -2,7 +2,11 @@
 name = "adventofcode-2022"
 version = "0.1.0"
 edition = "2021"
+default-run = "adventofcode-2022"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+anyhow = { version = "1.0.68", features = ["backtrace"] }
+clap = { version = "4.0.32", features = ["derive"] }
+nix = "0.26.1"
