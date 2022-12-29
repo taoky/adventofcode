@@ -23,6 +23,7 @@ struct Args {
     #[arg(value_enum, default_value_t = Mode::Release)]
     mode: Mode,
 
+    /// Test memory usage with cgroupv2 or not
     #[arg(long, default_value_t = true)]
     memory: bool,
 }
@@ -196,10 +197,6 @@ fn main() {
     }
 
     for (day, part) in day_part_iterator() {
-        if day == 25 && part == 2 {
-            continue;
-        }
-
         let start_time = std::time::Instant::now();
         let mut cmd = Command::new(binaries_dir.join(format!("day{}-{}", day, part)));
         if day == 15 {
