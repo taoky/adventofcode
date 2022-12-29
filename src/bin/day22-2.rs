@@ -50,7 +50,6 @@ impl Map {
         self.map[x as usize][y as usize]
     }
 
-    #[allow(clippy::manual_range_contains)]
     fn void_transfer(&self, x: isize, y: isize, dir: Direction) -> ((isize, isize), Direction) {
         let height = self.map.len() as isize;
         let width = self.width as isize;
@@ -60,9 +59,9 @@ impl Map {
             16 => {
                 // example
                 if x == -1 {
-                    assert!(8 <= y && y <= 11 && dir == Direction::Up);
+                    assert!((8..=11).contains(&y) && dir == Direction::Up);
                     ((4, 11 - y), Direction::Down)
-                } else if y == 7 && 0 <= x && x <= 3 {
+                } else if y == 7 && (0..=3).contains(&x) {
                     if dir == Direction::Left {
                         ((4, x + 4), Direction::Down)
                     } else if dir == Direction::Up {
@@ -71,19 +70,19 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if x == 3 && 0 <= y && y <= 3 {
+                } else if x == 3 && (0..=3).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((0, 11 - y), Direction::Down)
-                } else if x == 3 && 4 <= y && y < 7 {
+                } else if x == 3 && (4..7).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((y - 4, 8), Direction::Right)
-                } else if y == 12 && 0 <= x && x <= 3 {
+                } else if y == 12 && (0..=3).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((11 - x, 15), Direction::Left)
-                } else if y == -1 && 4 <= x && x <= 7 {
+                } else if y == -1 && (4..=7).contains(&x) {
                     assert!(dir == Direction::Left);
                     ((11, 19 - x), Direction::Up)
-                } else if y == 12 && 4 <= x && x <= 7 {
+                } else if y == 12 && (4..=7).contains(&x) {
                     assert!(dir == Direction::Right);
                     if dir == Direction::Right {
                         ((8, 19 - x), Direction::Down)
@@ -93,13 +92,13 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if x == 7 && 12 < y && y <= 15 {
+                } else if x == 7 && (13..=15).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((19 - y, 11), Direction::Left)
-                } else if x == 8 && 0 <= y && y <= 3 {
+                } else if x == 8 && (0..=3).contains(&y) {
                     assert!(dir == Direction::Down);
                     ((11, 11 - y), Direction::Up)
-                } else if x == 8 && 4 <= y && y <= 7 {
+                } else if x == 8 && (4..=7).contains(&y) {
                     if dir == Direction::Down {
                         ((15 - y, 8), Direction::Right)
                     } else if dir == Direction::Left {
@@ -108,16 +107,16 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if y == 7 && 8 < x && x <= 11 {
+                } else if y == 7 && (9..=11).contains(&x) {
                     assert!(dir == Direction::Left);
                     ((7, 15 - x), Direction::Up)
-                } else if y == 16 && 8 <= x && x <= 11 {
+                } else if y == 16 && (8..=11).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((11 - x, 11), Direction::Left)
-                } else if x == 12 && 8 <= y && y <= 11 {
+                } else if x == 12 && (8..=11).contains(&y) {
                     assert!(dir == Direction::Down);
                     ((7, 11 - y), Direction::Up)
-                } else if x == 12 && 12 <= y && y <= 15 {
+                } else if x == 12 && (12..=15).contains(&y) {
                     assert!(dir == Direction::Down);
                     ((19 - y, 0), Direction::Right)
                 } else {
@@ -126,16 +125,16 @@ impl Map {
             }
             150 => {
                 // input
-                if x == -1 && 50 <= y && y <= 99 {
+                if x == -1 && (50..=99).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((100 + y, 0), Direction::Right)
-                } else if x == -1 && 100 <= y && y <= 149 {
+                } else if x == -1 && (100..=149).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((199, y - 100), Direction::Up)
-                } else if y == 49 && 0 <= x && x <= 49 {
+                } else if y == 49 && (0..=49).contains(&x) {
                     assert!(dir == Direction::Left);
                     ((149 - x, 0), Direction::Right)
-                } else if y == 49 && 50 <= x && x <= 99 {
+                } else if y == 49 && (50..=99).contains(&x) {
                     if dir == Direction::Left {
                         ((100, x - 50), Direction::Down)
                     } else if dir == Direction::Up {
@@ -144,10 +143,10 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if y == 150 && 0 <= x && x <= 49 {
+                } else if y == 150 && (0..=49).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((149 - x, 99), Direction::Left)
-                } else if x == 50 && 100 <= y && y <= 149 {
+                } else if x == 50 && (100..=149).contains(&y) {
                     if dir == Direction::Down {
                         ((y - 50, 99), Direction::Left)
                     } else if dir == Direction::Right {
@@ -156,19 +155,19 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if y == 100 && 50 < x && x <= 99 {
+                } else if y == 100 && (51..=99).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((49, x + 50), Direction::Up)
-                } else if x == 99 && 0 <= y && y <= 49 {
+                } else if x == 99 && (0..=49).contains(&y) {
                     assert!(dir == Direction::Up);
                     ((y + 50, 50), Direction::Right)
-                } else if y == -1 && 100 <= x && x <= 149 {
+                } else if y == -1 && (100..=149).contains(&x) {
                     assert!(dir == Direction::Left);
                     ((149 - x, 50), Direction::Right)
-                } else if y == 100 && 100 <= x && x <= 149 {
+                } else if y == 100 && (100..=149).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((149 - x, 149), Direction::Left)
-                } else if x == 150 && 50 <= y && y <= 99 {
+                } else if x == 150 && (50..=99).contains(&y) {
                     if dir == Direction::Down {
                         ((100 + y, 49), Direction::Left)
                     } else if dir == Direction::Right {
@@ -177,13 +176,13 @@ impl Map {
                     } else {
                         unreachable!()
                     }
-                } else if y == -1 && 150 <= x && x <= 199 {
+                } else if y == -1 && (150..=199).contains(&x) {
                     assert!(dir == Direction::Left);
                     ((0, x - 100), Direction::Down)
-                } else if y == 50 && 150 < x && x <= 199 {
+                } else if y == 50 && (151..=199).contains(&x) {
                     assert!(dir == Direction::Right);
                     ((149, x - 100), Direction::Up)
-                } else if x == 200 && 0 <= y && y <= 49 {
+                } else if x == 200 && (0..=49).contains(&y) {
                     assert!(dir == Direction::Down);
                     ((0, y + 100), Direction::Down)
                 } else {
