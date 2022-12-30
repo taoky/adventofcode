@@ -7,7 +7,7 @@ use std::{
 };
 
 use adventofcode_2022::{
-    resource::{cgroup::Cgroup, getrusage::GetRusage, Resource},
+    resource::{cgroup::Cgroup, getrusage::GetRusage, poll::Poll, Resource},
     utils::day_part_iterator,
 };
 use clap::{Parser, ValueEnum};
@@ -37,10 +37,12 @@ enum Mode {
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 enum Resourcer {
-    /// Use cgroupv2 to measure memory usage
+    /// Use cgroupv2 to measure memory usage (memory.peak)
     Cgroup,
-    /// Use waitid() and getrusage() to measure memory usage and time used (user + kernel)
+    /// Use fork(), memfd_create() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
     Getrusage,
+    /// Polling /proc/<pid>/statm to get memory usage (RSS + shared pages)
+    Poll,
     /// Just measure time used
     Pure,
 }
@@ -69,6 +71,7 @@ fn main() {
     let mut resourcer: Box<dyn Resource> = match cli.resourcer {
         Resourcer::Cgroup => Box::new(Cgroup::new(true)),
         Resourcer::Getrusage => Box::new(GetRusage::default()),
+        Resourcer::Poll => Box::new(Poll::default()),
         Resourcer::Pure => Box::new(Cgroup::new(false)),
     };
 
