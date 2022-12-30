@@ -9,4 +9,5 @@ default-run = "adventofcode-2022"
 [dependencies]
 anyhow = { version = "1.0.68", features = ["backtrace"] }
 clap = { version = "4.0.32", features = ["derive"] }
-nix = { version = "0.26.1", features = ["resource"] }
+nix = { version = "0.26.1", features = ["resource", "process", "fs"] }
+rand = "0.8.5"

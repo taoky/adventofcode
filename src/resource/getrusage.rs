@@ -1,32 +1,35 @@
-use std::{process::Command, time::Duration};
-
-use super::{Measurement, Resource};
-use anyhow::Result;
-use nix::{
-    sys::{
-        resource::{getrusage, UsageWho},
-        wait::{waitid, Id, WaitPidFlag, WaitStatus},
-    },
-    unistd::Pid,
+use std::{
+    ffi::CString,
+    fs::File,
+    io::{Read, Seek, SeekFrom, Write},
+    os::unix::prelude::FromRawFd,
+    process::Command,
+    time::Duration,
 };
 
-pub struct GetRusage {
-    last_time: Duration,
-    last_memory: usize,
-}
+use super::{Measurement, Resource};
+use anyhow::{Context, Result};
+use nix::{
+    libc,
+    sys::{
+        memfd::{memfd_create, MemFdCreateFlag},
+        resource::{getrusage, UsageWho},
+        wait::waitpid,
+    },
+    unistd::{fork, ForkResult},
+};
 
-impl Default for GetRusage {
-    fn default() -> Self {
-        println!("{:?}", getrusage(UsageWho::RUSAGE_CHILDREN));
-        Self {
-            last_time: Duration::from_secs(0),
-            last_memory: 0,
-        }
-    }
+#[derive(Default)]
+pub struct GetRusage {
+    memfd: Option<File>,
 }
 
 impl Resource for GetRusage {
     fn init(&mut self) -> Result<()> {
+        // create shared memory
+        let shared_memfile =
+            memfd_create(&CString::new("shared")?, MemFdCreateFlag::MFD_ALLOW_SEALING)?;
+        self.memfd = Some(unsafe { File::from_raw_fd(shared_memfile) });
         Ok(())
     }
 
@@ -35,53 +38,86 @@ impl Resource for GetRusage {
     }
 
     fn spawn(&mut self, cmd: &mut Command, _day: u8, _part: u8) -> Result<Measurement> {
-        let mut process = cmd.spawn()?;
+        match unsafe { fork()? } {
+            ForkResult::Parent { child, .. } => {
+                waitpid(child, None)?;
+            }
+            ForkResult::Child => {
+                fn go(cmd: &mut Command) -> Result<Measurement> {
+                    let mut process = cmd.spawn()?;
+                    process.wait()?;
+                    let rusage = getrusage(UsageWho::RUSAGE_CHILDREN)?;
+                    // println!("{:?}", getrusage(UsageWho::RUSAGE_CHILDREN)?);
 
-        // fork and NOWAIT waiting (not reaping)
-        loop {
-            let wait_status = waitid(
-                Id::Pid(Pid::from_raw(process.id().try_into()?)),
-                WaitPidFlag::WEXITED | WaitPidFlag::WNOWAIT,
-            )?;
+                    let timeval = rusage.user_time() + rusage.system_time();
+                    let time = Duration::from_secs(timeval.tv_sec().try_into()?)
+                        + Duration::from_micros(timeval.tv_usec().try_into()?);
 
-            match wait_status {
-                WaitStatus::Exited(_, status) => {
-                    if status != 0 {
-                        return Err(anyhow::anyhow!(
-                            "Command exited with non-zero status code: {}",
-                            status
-                        ));
+                    let memory = rusage.max_rss() * 1024;
+                    // println!("{:?} {}", time, memory);
+
+                    Ok(Measurement {
+                        time,
+                        memory: Some(memory.try_into()?),
+                    })
+                }
+
+                let output = match go(cmd) {
+                    Ok(measurement) => {
+                        // println!("{:?}", measurement);
+                        format!(
+                            "({},{})",
+                            measurement.time.as_nanos(),
+                            measurement.memory.unwrap()
+                        )
                     }
-                    break;
-                }
-                WaitStatus::Signaled(_, _, _) => {
-                    return Err(anyhow::anyhow!("Command exited with signal"));
-                }
-                WaitStatus::Stopped(_, _) => {}
-                WaitStatus::PtraceEvent(_, _, _) => {}
-                WaitStatus::PtraceSyscall(_) => {}
-                WaitStatus::Continued(_) => {}
-                _ => unreachable!(),
+                    Err(e) => {
+                        format!("Error: {}", e)
+                    }
+                };
+                let output = output.as_bytes();
+                self.memfd
+                    .as_mut()
+                    .unwrap()
+                    .set_len(output.len().try_into().unwrap())
+                    .unwrap();
+                self.memfd
+                    .as_mut()
+                    .unwrap()
+                    .seek(SeekFrom::Start(0))
+                    .unwrap();
+                self.memfd.as_mut().unwrap().write_all(output).unwrap();
+                self.memfd
+                    .as_mut()
+                    .unwrap()
+                    .seek(SeekFrom::Start(0))
+                    .unwrap();
+                // self.memfd.as_ref().unwrap().sync_all().unwrap();
+
+                unsafe { libc::_exit(0) };
             }
         }
 
-        // getrusage
-        let rusage = getrusage(UsageWho::RUSAGE_CHILDREN)?;
-        process.wait()?;
+        let mut buffer = String::new();
+        self.memfd.as_ref().unwrap().read_to_string(&mut buffer)?;
 
-        let timeval = rusage.user_time() + rusage.system_time();
-        let time = Duration::from_secs(timeval.tv_sec().try_into()?)
-            + Duration::from_micros(timeval.tv_usec().try_into()?)
-            - self.last_time;
-
-        let memory = usize::try_from(rusage.max_rss() * 1024)? - self.last_memory;
-
-        self.last_time = time;
-        self.last_memory = memory;
-
-        Ok(Measurement {
-            time,
-            memory: Some(memory),
-        })
+        if buffer.starts_with("Error:") {
+            Err(anyhow::anyhow!("{}", buffer))
+        } else {
+            let split: Vec<_> = buffer
+                .strip_prefix('(')
+                .context("buffer not prefixed with (")?
+                .strip_suffix(')')
+                .context("buffer not suffixed with )")?
+                .split(',')
+                .collect();
+            // println!("{} {:?}", buffer, split);
+            let time = Duration::from_nanos(split[0].parse()?);
+            let memory = split[1].parse()?;
+            Ok(Measurement {
+                time,
+                memory: Some(memory),
+            })
+        }
     }
 }

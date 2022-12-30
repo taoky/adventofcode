@@ -35,7 +35,7 @@ enum Mode {
     Release,
 }
 
-#[derive(ValueEnum, Clone, Copy, Debug)]
+#[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 enum Resourcer {
     /// Use cgroupv2 to measure memory usage
     Cgroup,
@@ -73,9 +73,13 @@ fn main() {
     };
 
     if let Err(e) = resourcer.init() {
-        eprintln!("Failed to initialize cgroup: {}", e);
-        eprintln!("{}", e.backtrace());
-        eprintln!("Will not calculate memory usage.");
+        if cli.resourcer == Resourcer::Cgroup {
+            eprintln!("Failed to initialize cgroup: {}", e);
+            eprintln!("{}", e.backtrace());
+            eprintln!("Will not calculate memory usage.");
+        } else {
+            panic!("Failed to initialize resourcer: {}", e);
+        }
     }
 
     for (day, part) in day_part_iterator() {

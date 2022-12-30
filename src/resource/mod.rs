@@ -2,6 +2,7 @@ use std::{process::Command, time::Duration};
 
 use anyhow::Result;
 
+#[derive(Debug)]
 pub struct Measurement {
     pub time: Duration,
     pub memory: Option<usize>,
