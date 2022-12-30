@@ -41,7 +41,7 @@ enum Resourcer {
     Cgroup,
     /// Use fork(), memfd_create() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
     Getrusage,
-    /// Polling /proc/<pid>/statm to get memory usage (RSS + shared pages)
+    /// Polling /proc/<pid>/smaps_rollup or /proc/<pid>/smaps to get memory usage (RSS + swap)
     Poll,
     /// Just measure time used
     Pure,

@@ -5,7 +5,7 @@ My solutions for [Advent Of Code 2022](https://adventofcode.com/2022/) challenge
 - Rust
 - No third-patry crates for challenge solutions
 - All solutions takes reasonable time and memory usage (WIP) [performance record](./performance.txt)
-- A program ([src/main.rs](src/main.rs)) printing the time and peak memory usage (with [cgroups](src/resource/cgroup.rs)(7) or [getrusage](src/resource/getrusage.rs)(2), or [polling /proc/pid/statm](src/resource/poll.rs)) of every compiled solution program on Linux.
+- A program ([src/main.rs](src/main.rs)) printing the time and peak memory usage (with [cgroups](src/resource/cgroup.rs)(7) or [getrusage](src/resource/getrusage.rs)(2), or [polling /proc/pid/smaps*](src/resource/poll.rs)) of every compiled solution program on Linux.
 
 ## Notes
 

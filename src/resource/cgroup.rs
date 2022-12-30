@@ -47,8 +47,12 @@ fn rust_initialize_cgroup() -> Result<()> {
     }
     // create subcgroups
     for (day, part) in day_part_iterator() {
-        let path = path.join(format!("day{}-{}", day, part));
-        std::fs::create_dir(path)?;
+        let folder = path.join(format!("day{}-{}", day, part));
+        std::fs::create_dir(folder)?;
+        // disable swap
+        let path = path.join("memory.swap.max");
+        let mut file = std::fs::OpenOptions::new().write(true).open(path)?;
+        file.write_all(b"0")?;
     }
 
     Ok(())
@@ -94,8 +98,8 @@ echo {} > /sys/fs/cgroup/adventofcode-2022/day0/cgroup.procs
     );
     for (day, part) in day_part_iterator() {
         script += format!(
-            "mkdir /sys/fs/cgroup/adventofcode-2022/day{}-{} && chown {} /sys/fs/cgroup/adventofcode-2022/day{}-{} && chown {} /sys/fs/cgroup/adventofcode-2022/day{}-{}/cgroup.procs\n",
-            day, part, uid, day, part, uid, day, part
+            "mkdir /sys/fs/cgroup/adventofcode-2022/day{}-{} && chown {} /sys/fs/cgroup/adventofcode-2022/day{}-{} && chown {} /sys/fs/cgroup/adventofcode-2022/day{}-{}/cgroup.procs && echo 0 > /sys/fs/cgroup/adventofcode-2022/day{}-{}/memory.swap.max\n",
+            day, part, uid, day, part, uid, day, part, day, part
         )
         .as_str();
     }
