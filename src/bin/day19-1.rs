@@ -1,6 +1,6 @@
 use std::{
     cmp::max,
-    collections::{HashSet, VecDeque},
+    collections::VecDeque,
 };
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -63,7 +63,7 @@ fn main() {
         let geode_robot_obsidian_cost = splitted[30].parse::<i32>().unwrap();
 
         let mut queue: VecDeque<State> = VecDeque::new();
-        let mut hs = HashSet::new();
+        // let mut hs = HashSet::new();
         queue.push_back(State::default());
 
         let mut max_geode = 0;
@@ -100,11 +100,11 @@ fn main() {
                         new_state.geode += minutes * new_state.geode_robot;
                         new_state.geode_robot += 1;
                         new_state.remaining_time -= minutes;
-                        if hs.contains(&new_state) {
-                            continue;
-                        }
+                        // if hs.contains(&new_state) {
+                        //     continue;
+                        // }
                         queue.push_back(new_state);
-                        hs.insert(new_state);
+                        // hs.insert(new_state);
                         continued = true;
                     }
                     1 => {
@@ -129,11 +129,11 @@ fn main() {
                         new_state.geode += minutes * new_state.geode_robot;
                         new_state.obsidian_robot += 1;
                         new_state.remaining_time -= minutes;
-                        if hs.contains(&new_state) {
-                            continue;
-                        }
+                        // if hs.contains(&new_state) {
+                        //     continue;
+                        // }
                         queue.push_back(new_state);
-                        hs.insert(new_state);
+                        // hs.insert(new_state);
                         continued = true;
                     }
                     2 => {
@@ -155,11 +155,11 @@ fn main() {
                         new_state.geode += minutes * new_state.geode_robot;
                         new_state.clay_robot += 1;
                         new_state.remaining_time -= minutes;
-                        if hs.contains(&new_state) {
-                            continue;
-                        }
+                        // if hs.contains(&new_state) {
+                        //     continue;
+                        // }
                         queue.push_back(new_state);
-                        hs.insert(new_state);
+                        // hs.insert(new_state);
                         continued = true;
                     }
                     3 => {
@@ -185,11 +185,11 @@ fn main() {
                         new_state.geode += minutes * new_state.geode_robot;
                         new_state.ore_robot += 1;
                         new_state.remaining_time -= minutes;
-                        if hs.contains(&new_state) {
-                            continue;
-                        }
+                        // if hs.contains(&new_state) {
+                        //     continue;
+                        // }
                         queue.push_back(new_state);
-                        hs.insert(new_state);
+                        // hs.insert(new_state);
                         continued = true;
                     }
                     _ => unreachable!(),
