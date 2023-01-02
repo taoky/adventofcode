@@ -21,6 +21,10 @@ My solutions for [Advent Of Code 2022](https://adventofcode.com/2022/) challenge
 - Day 17 Part II: It's impossible to calculate directly even when O(n) (as n = 1000000000000). You need to find a repeating pattern when simulating. A `std::collection::HashSet` is a good choice for storing the state.
 - Day 18: Floodfilling.
 - Day 19: It may help to eliminate intermediate state by searching "what robot should be made next" instead of "what should I do next minute". And the most important optimization is: Don't make a X-cracking robot when there are enough X-cracking robots to make other robots that need X (You need one minute to make a robot out).
+  - And also, when there's Y minutes left...
+    - Y=1: Useless to build any robot
+    - Y=2: Useless to build non-geode robots
+    - Y=3: Also useless to build non-geode robots: Considering that if you build a X-cracking robots, it can only give you resource after the next mintute.
 - Day 20: A linked list may help. Consider the case when rounds >> array length (not covered by example).
 - Day 21 Part II: The best solution may be using a symbolic solver (Z3? SymPy? or even Mathematica?). However, it seems that one side of the expression does not have "input", and "input" is only involved once on the other side.
 - Day 22 Part II: The hardest part of AoC 2022. I cannot figure out a universal solution and can only hard-coded specifically for the example and my input. Drawing a diagram like [assets/day22.svg](assets/day22.svg) may help (I use Inkscape).
