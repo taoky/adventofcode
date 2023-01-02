@@ -39,7 +39,7 @@ enum Mode {
 enum Resourcer {
     /// Use cgroupv2 to measure memory usage (memory.peak)
     Cgroup,
-    /// Use fork(), memfd_create() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
+    /// Use fork(), pipe() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
     Getrusage,
     /// Polling /proc/<pid>/smaps_rollup or /proc/<pid>/smaps to get memory usage (RSS + swap)
     Poll,

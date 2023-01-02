@@ -1,7 +1,6 @@
 use std::{
-    ffi::CString,
     fs::File,
-    io::{Read, Seek, SeekFrom, Write},
+    io::{Read, Write},
     os::unix::prelude::FromRawFd,
     process::Command,
     time::Duration,
@@ -12,24 +11,17 @@ use anyhow::{Context, Result};
 use nix::{
     libc,
     sys::{
-        memfd::{memfd_create, MemFdCreateFlag},
         resource::{getrusage, UsageWho},
         wait::waitpid,
     },
-    unistd::{fork, ForkResult},
+    unistd::{fork, pipe, ForkResult},
 };
 
 #[derive(Default)]
-pub struct GetRusage {
-    memfd: Option<File>,
-}
+pub struct GetRusage {}
 
 impl Resource for GetRusage {
     fn init(&mut self) -> Result<()> {
-        // create shared memory
-        let shared_memfile =
-            memfd_create(&CString::new("shared")?, MemFdCreateFlag::MFD_ALLOW_SEALING)?;
-        self.memfd = Some(unsafe { File::from_raw_fd(shared_memfile) });
         Ok(())
     }
 
@@ -38,11 +30,15 @@ impl Resource for GetRusage {
     }
 
     fn spawn(&mut self, cmd: &mut Command, _day: u8, _part: u8) -> Result<Measurement> {
+        let pipes = pipe()?; // (read, write)
+        let mut write_file = unsafe { File::from_raw_fd(pipes.1) };
+        let mut read_file = unsafe { File::from_raw_fd(pipes.0) };
         match unsafe { fork()? } {
             ForkResult::Parent { child, .. } => {
                 waitpid(child, None)?;
             }
             ForkResult::Child => {
+                std::mem::drop(read_file);
                 fn go(cmd: &mut Command) -> Result<Measurement> {
                     let mut process = cmd.spawn()?;
                     process.wait()?;
@@ -76,30 +72,15 @@ impl Resource for GetRusage {
                     }
                 };
                 let output = output.as_bytes();
-                self.memfd
-                    .as_mut()
-                    .unwrap()
-                    .set_len(output.len().try_into().unwrap())
-                    .unwrap();
-                self.memfd
-                    .as_mut()
-                    .unwrap()
-                    .seek(SeekFrom::Start(0))
-                    .unwrap();
-                self.memfd.as_mut().unwrap().write_all(output).unwrap();
-                self.memfd
-                    .as_mut()
-                    .unwrap()
-                    .seek(SeekFrom::Start(0))
-                    .unwrap();
-                // self.memfd.as_ref().unwrap().sync_all().unwrap();
+                write_file.write_all(output).unwrap();
 
                 unsafe { libc::_exit(0) };
             }
         }
+        std::mem::drop(write_file);
 
         let mut buffer = String::new();
-        self.memfd.as_ref().unwrap().read_to_string(&mut buffer)?;
+        read_file.read_to_string(&mut buffer)?;
 
         if buffer.starts_with("Error:") {
             Err(anyhow::anyhow!("{}", buffer))
