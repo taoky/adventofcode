@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 fn main() {
     // get target y from argv
     let max_coor = std::env::args()
@@ -7,7 +5,7 @@ fn main() {
         .expect("max_coor should be in argv[1]")
         .parse::<i32>()
         .unwrap();
-    let mut map: HashMap<i32, Vec<(i32, i32)>> = HashMap::new();
+    let mut map: Vec<Vec<(i32, i32)>> = vec![Vec::new(); (max_coor + 1) as usize];
     loop {
         let mut input = String::new();
         let input_size = std::io::stdin().read_line(&mut input).unwrap();
@@ -63,16 +61,14 @@ fn main() {
                 continue;
             }
             let range = get_range_at_y(y).unwrap();
-            map.entry(y)
-                .and_modify(|v| v.push(range))
-                .or_insert_with(|| vec![range]);
+            map[y as usize].push(range);
         }
 
         // println!("{:?}", map);
     }
 
     let mut not_covered = Vec::new();
-    for (y, mut xranges) in map {
+    for (y, xranges) in map.iter_mut().enumerate() {
         xranges.sort();
         let lp = xranges[0].0;
         let mut rp = xranges[0].1;
