@@ -52,10 +52,20 @@ impl Resource for Poll {
                 let mut swap = 0;
                 for stat in stats {
                     if stat.starts_with("Rss:") {
-                        let stat = stat.strip_prefix("Rss:").unwrap().strip_suffix(" kB").unwrap().trim();
+                        let stat = stat
+                            .strip_prefix("Rss:")
+                            .unwrap()
+                            .strip_suffix(" kB")
+                            .unwrap()
+                            .trim();
                         rss += stat.parse::<usize>()?;
                     } else if stat.starts_with("Swap:") {
-                        let stat = stat.strip_prefix("Swap:").unwrap().strip_suffix(" kB").unwrap().trim();
+                        let stat = stat
+                            .strip_prefix("Swap:")
+                            .unwrap()
+                            .strip_suffix(" kB")
+                            .unwrap()
+                            .trim();
                         swap += stat.parse::<usize>()?;
                     }
                 }

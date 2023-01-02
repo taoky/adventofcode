@@ -1,7 +1,4 @@
-use std::{
-    cmp::max,
-    collections::VecDeque,
-};
+use std::{cmp::max, collections::VecDeque};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 struct State {
