@@ -168,7 +168,7 @@ fn main() {
             _ => unreachable!(),
         }
 
-        const CYCLE_LEN: i32 = 5000;
+        const CYCLE_LEN: i32 = 50;
 
         let mut state_seq = Vec::new();
         for x in height - 1 - CYCLE_LEN..height - 1 {
@@ -188,10 +188,10 @@ fn main() {
         };
         let rock_id = rock_id + 1; // fix rock_id off-by-one error
         if height > CYCLE_LEN && states_hashmap.contains_key(&state) {
-            println!(
-                "current rock: {}, current height: {}, value: {:?}",
-                rock_id, height, states_hashmap[&state]
-            );
+            // println!(
+            //     "current rock: {}, current height: {}, value: {:?}",
+            //     rock_id, height, states_hashmap[&state]
+            // );
             let snapshot_rock = states_hashmap[&state].0;
             let snapshot_height = states_hashmap[&state].1;
             if (target - snapshot_rock) % (rock_id - snapshot_rock) == 0 {

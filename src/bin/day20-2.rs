@@ -22,7 +22,7 @@ impl Node {
     }
 }
 
-fn integrity_check(seq: &List) {
+fn integrity_check(seq: &List) -> bool {
     let len = seq.arena.len();
     let mut idx = 0;
     let mut next = seq.arena[idx].next;
@@ -47,6 +47,7 @@ fn integrity_check(seq: &List) {
         assert_eq!(seq.arena[idx].next, next);
     }
     assert_eq!(cnt, len - 1);
+    true
 }
 
 // fn print_list(seq: &List) {
@@ -140,7 +141,7 @@ fn main() {
             seq.arena[next_target_idx].prev = i;
 
             // print_list(&seq);
-            integrity_check(&seq);
+            debug_assert!(integrity_check(&seq));
         }
     }
 
