@@ -127,10 +127,8 @@ fn main() {
             queue.push_back(new_state);
             success = true;
         }
-        if !success {
-            if head.score > res {
-                res = head.score;
-            }
+        if !success && head.score > res {
+            res = head.score;
         }
     }
     println!("{}", res);
