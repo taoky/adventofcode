@@ -1,3 +1,46 @@
+use std::collections::HashSet;
+
+fn manhattan_dist(sensor: (i32, i32), dist: (i32, i32)) -> i32 {
+    (sensor.0 - dist.0).abs() + (sensor.1 - dist.1).abs()
+}
+
+#[derive(Debug)]
+struct Segment {
+    // ax + b = y, which x in [l, r]
+    a: i32, // a = 1 or -1
+    b: i32,
+    l: i32,
+    r: i32,
+}
+
+impl Segment {
+    fn new(coord: (i32, i32), a: i32, l: i32, r: i32) -> Self {
+        let b = match a {
+            1 => coord.1 - coord.0,
+            -1 => coord.1 + coord.0,
+            _ => unreachable!(),
+        };
+        Segment { a, b, l, r }
+    }
+
+    fn intersection(&self, other: &Segment) -> Option<(i32, i32)> {
+        if self.a == other.a {
+            return None;
+        }
+        let x = (other.b - self.b) / (self.a - other.a);
+        let y = self.a * x + self.b;
+        if x >= self.l && x <= self.r && x >= other.l && x <= other.r {
+            Some((x, y))
+        } else {
+            None
+        }
+    }
+
+    // fn is_on(&self, coord: (i32, i32)) -> bool {
+    //     coord.1 == self.a * coord.0 + self.b && coord.0 >= self.l && coord.0 <= self.r
+    // }
+}
+
 fn main() {
     // get target y from argv
     let max_coor = std::env::args()
@@ -5,7 +48,8 @@ fn main() {
         .expect("max_coor should be in argv[1]")
         .parse::<i32>()
         .unwrap();
-    let mut map: Vec<Vec<(i32, i32)>> = vec![Vec::new(); (max_coor + 1) as usize];
+    let mut sensors = Vec::new();
+    let mut segments = Vec::new();
     loop {
         let mut input = String::new();
         let input_size = std::io::stdin().read_line(&mut input).unwrap();
@@ -37,69 +81,55 @@ fn main() {
         //     exclusion.push(beacon.0);
         // }
 
-        let manhattan_dist = (sensor.0 - beacon.0).abs() + (sensor.1 - beacon.1).abs();
+        let dist = manhattan_dist(sensor, beacon);
+        sensors.push((sensor, dist));
 
-        // |? - sensor.0| + |target_y - sensor.1| = manhattan_dist
-        let get_range_at_y = |y: i32| -> Option<(i32, i32)> {
-            let lval = manhattan_dist - (y - sensor.1).abs();
-            if lval < 0 {
-                // trap: target_y may be too far away
-                return None;
-            }
-            let lval_v1 = lval + sensor.0;
-            let lval_v2 = sensor.0 - lval;
+        let coord1 = (sensor.0, sensor.1 - dist - 1);
+        let coord2 = (sensor.0, sensor.1 + dist + 1);
 
-            Some(if lval_v1 < lval_v2 {
-                (lval_v1, lval_v2)
-            } else {
-                (lval_v2, lval_v1)
-            })
-        };
-
-        for y in sensor.1 - manhattan_dist..=sensor.1 + manhattan_dist {
-            if y < 0 || y > max_coor {
-                continue;
-            }
-            let range = get_range_at_y(y).unwrap();
-            map[y as usize].push(range);
-        }
-
-        // println!("{:?}", map);
+        segments.push(Segment::new(coord1, -1, sensor.0 - dist - 1, sensor.0));
+        segments.push(Segment::new(coord1, 1, sensor.0, sensor.0 + dist + 1));
+        segments.push(Segment::new(coord2, -1, sensor.0, sensor.0 + dist + 1));
+        segments.push(Segment::new(coord2, 1, sensor.0 - dist - 1, sensor.0));
     }
 
-    let mut not_covered = Vec::new();
-    for (y, xranges) in map.iter_mut().enumerate() {
-        xranges.sort();
-        let lp = xranges[0].0;
-        let mut rp = xranges[0].1;
-        if lp > 0 {
-            // println!("y {} not covered: 0..{}", y, lp);
-            for i in 0..lp {
-                not_covered.push((i, y));
+    fn is_not_covered(sensors: &[((i32, i32), i32)], coord: (i32, i32)) -> bool {
+        for sensor in sensors.iter() {
+            if manhattan_dist(sensor.0, coord) <= sensor.1 {
+                return false;
             }
         }
-        for xrange in xranges {
-            if xrange.0 > rp {
-                // println!("y {} not covered: {}..{}", y, rp + 1, xrange.0)
-                for i in rp + 1..xrange.0 {
-                    not_covered.push((i, y));
+        true
+    }
+
+    let mut answers = HashSet::new();
+    for i in 0..segments.len() {
+        for j in i + 1..segments.len() {
+            // println!("{:?} {:?}", segments[i], segments[j]);
+            if let Some(coord) = segments[i].intersection(&segments[j]) {
+                if coord.0 < 0 || coord.0 >= max_coor || coord.1 < 0 || coord.1 >= max_coor {
+                    continue;
+                }
+                if !answers.insert(coord) {
+                    continue;
+                }
+                if is_not_covered(&sensors, coord) {
+                    println!("{:?}", coord);
+                    println!("{}", coord.0 as u64 * 4000000 + coord.1 as u64);
                 }
             }
-            if xrange.1 > rp {
-                rp = xrange.1
-            }
-        }
-        if rp < max_coor {
-            // println!("y {} not covered: {}..={}", y, rp + 1, max_coor)
-            for i in rp + 1..=max_coor {
-                not_covered.push((i, y));
-            }
         }
     }
-    println!("{:?}", not_covered);
-
-    assert!(not_covered.len() == 1);
-    let coord = not_covered[0];
-    // trap: overflow
-    println!("{}", coord.0 as u64 * 4000000 + coord.1 as u64);
+    // corner points
+    for coord in [
+        (1, 1),
+        (1, max_coor - 1),
+        (max_coor - 1, 1),
+        (max_coor - 1, max_coor - 1),
+    ] {
+        if !answers.insert(coord) && is_not_covered(&sensors, coord) {
+            println!("{:?}", coord);
+            println!("{}", coord.0 as u64 * 4000000 + coord.1 as u64);
+        }
+    }
 }

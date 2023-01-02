@@ -4,7 +4,7 @@ My solutions for [Advent Of Code 2022](https://adventofcode.com/2022/) challenge
 
 - Rust
 - No third-patry crates for challenge solutions
-- All solutions takes reasonable time and memory usage (WIP) [performance record](./performance.txt)
+- All solutions takes reasonable time and memory usage. Performance record [(by getrusage)](./performance-getrusage.txt) [(by cgroups)](./performance-cgroup.txt)
 - A program ([src/main.rs](src/main.rs)) printing the time and peak memory usage (with [cgroups](src/resource/cgroup.rs)(7) or [getrusage](src/resource/getrusage.rs)(2), or [polling /proc/pid/smaps*](src/resource/poll.rs)) of every compiled solution program on Linux.
 
 ## Notes
@@ -17,6 +17,7 @@ My solutions for [Advent Of Code 2022](https://adventofcode.com/2022/) challenge
 - Day 12: BFS
 - Day 13: Interesting as you need to write a simple parser and comparer.
 - Day 15: Be careful of result overflowing. And when calculating range on a fixed y with Manhattan distance, don't count when y is too far away.
+  - Part II could be done trickly: Instead of calculating all ranges on all y in [0, 4000000], you can get four segments for each sensor that it "just right" could not find beacons on them. Find all intersections of segments, and check if they are far enough from all sensors.
 - Day 16: Eliminate intermediate state by using Floyd-Warshall algorithm to get shortest path distances between start point and all active valves.
 - Day 17 Part II: It's impossible to calculate directly even when O(n) (as n = 1000000000000). You need to find a repeating pattern when simulating. A `std::collection::HashSet` is a good choice for storing the state.
 - Day 18: Floodfilling.
