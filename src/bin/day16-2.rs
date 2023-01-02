@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 struct Valve {
     // name: String,
@@ -29,7 +29,6 @@ fn main() {
     let mut valves: Vec<Valve> = Vec::new();
     let mut namemap: HashMap<String, usize> = HashMap::new();
 
-    let mut openable_valve_cnt = 0;
     let mut start_idx = 0;
     loop {
         let mut input = String::new();
@@ -53,9 +52,6 @@ fn main() {
             .collect();
         valves.push(Valve { rate, to_valves });
         namemap.insert(valve_name.clone(), valves.len() - 1);
-        if rate != 0 {
-            openable_valve_cnt += 1;
-        }
         if valve_name == "AA" {
             start_idx = valves.len() - 1;
         }
@@ -96,38 +92,13 @@ fn main() {
     // BFS
     let mut queue: VecDeque<State> = VecDeque::new();
     queue.push_back(State::new(start_idx));
-    let mut hs = HashSet::new();
+    // let mut hs = HashSet::new();
     // (score, remaining time)
     // let mut max_scores = vec![(0, 0, Vec::new()); valves.len()];
     let mut results: HashMap<Vec<usize>, i32> = HashMap::new();
 
     while !queue.is_empty() {
         let head = queue.pop_front().unwrap();
-        if head.remaining_time == 0 || head.opened_valves.len() == openable_valve_cnt {
-            results
-                .entry({
-                    let mut x = head.opened_valves.clone();
-                    x.sort();
-                    x
-                })
-                .and_modify(|x| {
-                    if *x < head.score {
-                        *x = head.score;
-                    }
-                })
-                .or_insert(head.score);
-            continue;
-        }
-        if !(valves[head.pos].rate == 0 || head.opened_valves.contains(&head.pos)) {
-            // this valve can be opened
-            let mut new_state = head.clone();
-            new_state.remaining_time -= 1;
-            new_state.score += valves[head.pos].rate * new_state.remaining_time;
-
-            new_state.opened_valves.push(new_state.pos);
-            // println!("Opening: {:?}", new_state);
-            queue.push_back(new_state);
-        }
         for to_idx in active_valves.iter() {
             if head.opened_valves.contains(to_idx) || *to_idx == start_idx {
                 continue;
@@ -135,18 +106,27 @@ fn main() {
             let mut new_state = head.clone();
             new_state.pos = *to_idx;
             new_state.remaining_time -= dist[head.pos][*to_idx] as i32;
+            new_state.remaining_time -= 1;
+            new_state.opened_valves.push(new_state.pos);
+            new_state.score += valves[new_state.pos].rate * new_state.remaining_time;
             if new_state.remaining_time < 0 {
                 continue;
             }
 
-            if hs.contains(&new_state) {
-                continue;
-            } else {
-                hs.insert(new_state.clone());
-            }
-            // println!("Changing valve: {:?}", new_state);
             queue.push_back(new_state);
         }
+        results
+            .entry({
+                let mut x = head.opened_valves.clone();
+                x.sort();
+                x
+            })
+            .and_modify(|x| {
+                if *x < head.score {
+                    *x = head.score;
+                }
+            })
+            .or_insert(head.score);
     }
 
     let mut results: Vec<_> = results.iter().collect();

@@ -3,8 +3,10 @@
 // Here uses Floyd-Warshall method to get shortest paths between each pair of valves
 // And then use BFS to find solution, and the time is acceptable (~5 seconds)
 // https://www.reddit.com/r/adventofcode/comments/zn6k1l/2022_day_16_solutions/
+// And then if you each time choose the next valve to open, instead of chossing to open current valve or go to other places
+// It could be much faster (<1 seconds)
 
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 struct Valve {
     // name: String,
@@ -35,7 +37,6 @@ fn main() {
     let mut valves: Vec<Valve> = Vec::new();
     let mut namemap: HashMap<String, usize> = HashMap::new();
 
-    let mut openable_valve_cnt = 0;
     let mut start_idx = 0;
     loop {
         let mut input = String::new();
@@ -59,9 +60,7 @@ fn main() {
             .collect();
         valves.push(Valve { rate, to_valves });
         namemap.insert(valve_name.clone(), valves.len() - 1);
-        if rate != 0 {
-            openable_valve_cnt += 1;
-        }
+
         if valve_name == "AA" {
             start_idx = valves.len() - 1;
         }
@@ -102,35 +101,15 @@ fn main() {
     // BFS
     let mut queue: VecDeque<State> = VecDeque::new();
     queue.push_back(State::new(start_idx));
-    let mut hs = HashSet::new();
+    // let mut hs = HashSet::new();
     // (score, remaining time)
     // let mut max_scores = vec![(0, 0, Vec::new()); valves.len()];
     let mut res = 0;
 
     while !queue.is_empty() {
         let head = queue.pop_front().unwrap();
-        if head.remaining_time == 0 || head.opened_valves.len() == openable_valve_cnt {
-            if head.score > res {
-                res = head.score;
-            }
-            continue;
-        }
-        if !(valves[head.pos].rate == 0 || head.opened_valves.contains(&head.pos)) {
-            // this valve can be opened
-            let mut new_state = head.clone();
-            new_state.remaining_time -= 1;
-            new_state.score += valves[head.pos].rate * new_state.remaining_time;
-            // if new_state.score > max_scores[head.pos].0 {
-            //     max_scores[head.pos] = (
-            //         new_state.score,
-            //         new_state.remaining_time,
-            //         new_state.opened_valves.clone(),
-            //     );
-            // }
-            new_state.opened_valves.push(new_state.pos);
-            // println!("Opening: {:?}", new_state);
-            queue.push_back(new_state);
-        }
+        // go and open other valves
+        let mut success = false;
         for to_idx in active_valves.iter() {
             if head.opened_valves.contains(to_idx) || *to_idx == start_idx {
                 continue;
@@ -138,37 +117,20 @@ fn main() {
             let mut new_state = head.clone();
             new_state.pos = *to_idx;
             new_state.remaining_time -= dist[head.pos][*to_idx] as i32;
+            new_state.remaining_time -= 1;
+            new_state.opened_valves.push(new_state.pos);
+            new_state.score += valves[new_state.pos].rate * new_state.remaining_time;
             if new_state.remaining_time < 0 {
                 continue;
             }
-            // if max_scores[to_idx].0 > new_state.score
-            //     && max_scores[to_idx].1 > new_state.remaining_time
-            // {
-            //     // if there was a state in valve that has more score and time than this state
-            //     // we cannot just safely skip this state
-            //     // it's necessary to check opened valves
-            //     if max_scores[to_idx].2.len() >= new_state.opened_valves.len() {
-            //         // does max scores contains new state's opened valves?
-            //         let mut skip = true;
-            //         for i in new_state.opened_valves.iter() {
-            //             if !max_scores[to_idx].2.contains(i) {
-            //                 skip = false;
-            //                 break;
-            //             }
-            //         }
-            //         if skip {
-            //             continue;
-            //         }
-            //     }
-            // }
 
-            if hs.contains(&new_state) {
-                continue;
-            } else {
-                hs.insert(new_state.clone());
-            }
-            // println!("Changing valve: {:?}", new_state);
             queue.push_back(new_state);
+            success = true;
+        }
+        if !success {
+            if head.score > res {
+                res = head.score;
+            }
         }
     }
     println!("{}", res);
