@@ -38,6 +38,10 @@ impl Resource for GetRusage {
                 waitpid(child, None)?;
             }
             ForkResult::Child => {
+                // Please note that getrusage() is not in the async signal safe list.
+                // thus it's impossible to get the resource usage of the child process safely after fork()
+                // in multithreaded programs.
+                // This program is single-thread thus it's not a problem.
                 std::mem::drop(read_file);
                 fn go(cmd: &mut Command) -> Result<Measurement> {
                     let mut process = cmd.spawn()?;
