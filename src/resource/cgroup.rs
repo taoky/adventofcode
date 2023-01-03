@@ -1,4 +1,4 @@
-use crate::utils::day_part_iterator;
+use crate::utils::{day_part_iterator, u32_to_bytes};
 
 use super::{Measurement, Resource};
 use std::{
@@ -9,7 +9,7 @@ use std::{
 };
 
 use anyhow::Result;
-use nix::unistd::{Pid, Uid};
+use nix::{unistd::{Pid, Uid, close, write}, fcntl::{open, OFlag}, sys::stat::Mode};
 
 const CGROUP_DIR: &str = "/sys/fs/cgroup/adventofcode-2022";
 
@@ -163,19 +163,24 @@ impl Resource for Cgroup {
     }
 
     fn spawn(&mut self, cmd: &mut Command, day: u8, part: u8) -> Result<Measurement> {
+        let mut proc_file_fd = -1;
         if self.enabled {
+            // be sophisticated: no heap allocation inside pre_exec
+            proc_file_fd = open(
+                Path::new(CGROUP_DIR)
+                    .join(format!("day{}-{}", day, part))
+                    .join("cgroup.procs").as_os_str(),
+                    OFlag::O_WRONLY,
+                    Mode::empty()
+            )?;
             unsafe {
                 cmd.pre_exec(move || {
-                    std::fs::OpenOptions::new()
-                        .write(true)
-                        .open(
-                            Path::new(CGROUP_DIR)
-                                .join(format!("day{}-{}", day, part))
-                                .join("cgroup.procs"),
-                        )
-                        .unwrap()
-                        .write_all(format!("{}", std::process::id()).as_bytes())
-                        .unwrap();
+                    // no heap memory allocation inside
+                    let mut buf = [0u8; 32];
+                    let id = std::process::id();
+                    let len = u32_to_bytes(id, &mut buf);
+                    write(proc_file_fd, &buf.as_slice()[..len])?;
+                    close(proc_file_fd)?;
                     Ok(())
                 });
             }
@@ -183,6 +188,9 @@ impl Resource for Cgroup {
 
         let start_time = std::time::Instant::now();
         let res = cmd.spawn()?.wait()?;
+        if self.enabled {
+            close(proc_file_fd)?;
+        }
         if !res.success() {
             match res.code() {
                 Some(code) => {
