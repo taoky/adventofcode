@@ -37,8 +37,10 @@ enum Mode {
 
 #[derive(ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 enum Resourcer {
-    /// Use cgroupv2 to measure memory usage (memory.peak)
+    /// Use cgroupv2 to measure memory usage (memory.peak), root permission required
     Cgroup,
+    /// Use dbus to let systemd delegate cgroupv2 subtree to current user
+    CgroupSystemd,
     /// Use fork(), pipe() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
     Getrusage,
     /// Polling /proc/<pid>/smaps_rollup or /proc/<pid>/smaps to get memory usage (RSS + swap)
@@ -69,14 +71,15 @@ fn main() {
         Mode::Release => "release/",
     });
     let mut resourcer: Box<dyn Resource> = match cli.resourcer {
-        Resourcer::Cgroup => Box::new(Cgroup::new(true)),
+        Resourcer::Cgroup => Box::new(Cgroup::new(true, false)),
+        Resourcer::CgroupSystemd => Box::new(Cgroup::new(true, true)),
         Resourcer::Getrusage => Box::new(GetRusage::default()),
         Resourcer::Poll => Box::new(Poll::default()),
-        Resourcer::Pure => Box::new(Cgroup::new(false)),
+        Resourcer::Pure => Box::new(Cgroup::new(false, false)),
     };
 
     if let Err(e) = resourcer.init() {
-        if cli.resourcer == Resourcer::Cgroup {
+        if cli.resourcer == Resourcer::Cgroup || cli.resourcer == Resourcer::CgroupSystemd {
             eprintln!("Failed to initialize cgroup: {}", e);
             eprintln!("{}", e.backtrace());
             eprintln!("Will not calculate memory usage.");
@@ -122,6 +125,9 @@ fn main() {
     }
 
     if let Err(e) = { resourcer.cleanup() } {
-        eprintln!("Failed to cleanup cgroupv2: {}", e);
+        eprintln!("Failed to cleanup: {}", e);
+        if cli.resourcer == Resourcer::Cgroup || cli.resourcer == Resourcer::CgroupSystemd {
+            eprintln!("{}", e.backtrace());
+        }
     }
 }

@@ -4,6 +4,8 @@ pub mod day23;
 pub mod day24;
 pub mod day7;
 
+pub mod systemd;
+
 // for measurement program
 pub fn day_part_iterator() -> impl Iterator<Item = (u8, u8)> {
     (1..=24)

@@ -1,4 +1,8 @@
-use crate::utils::{day_part_iterator, u32_to_bytes};
+use crate::utils::{
+    day_part_iterator,
+    systemd::{ManagerProxyBlocking, ScopeProxyBlocking},
+    u32_to_bytes,
+};
 
 use super::{Measurement, Resource};
 use std::{
@@ -9,9 +13,12 @@ use std::{
 };
 
 use anyhow::Result;
-use nix::{unistd::{Pid, Uid, close, write}, fcntl::{open, OFlag}, sys::stat::Mode};
-
-const CGROUP_DIR: &str = "/sys/fs/cgroup/adventofcode-2022";
+use nix::{
+    fcntl::{open, OFlag},
+    sys::stat::Mode,
+    unistd::{close, getpid, write, Pid, Uid},
+};
+use zbus::blocking::Connection;
 
 fn sudo(script: &str, explanation: &str) -> Result<()> {
     eprint!("{}", explanation);
@@ -35,10 +42,10 @@ fn sudo(script: &str, explanation: &str) -> Result<()> {
     }
 }
 
-fn rust_initialize_cgroup() -> Result<()> {
-    let path = Path::new(CGROUP_DIR);
+fn rust_initialize_cgroup(root: &str) -> Result<()> {
+    let path = Path::new(root);
 
-    std::fs::create_dir(path)?;
+    std::fs::create_dir_all(path)?;
     // write subtree-control
     {
         let path = path.join("cgroup.subtree_control");
@@ -58,8 +65,8 @@ fn rust_initialize_cgroup() -> Result<()> {
     Ok(())
 }
 
-fn rust_cleanup_cgroup() -> Result<()> {
-    let path = Path::new(CGROUP_DIR);
+fn rust_cleanup_cgroup(root: &str, remove_root: bool) -> Result<()> {
+    let path = Path::new(root);
     if path.try_exists()? {
         for (day, part) in day_part_iterator() {
             let path = path.join(format!("day{}-{}", day, part));
@@ -71,7 +78,9 @@ fn rust_cleanup_cgroup() -> Result<()> {
         if leaf.try_exists()? {
             std::fs::remove_dir(leaf)?;
         }
-        std::fs::remove_dir(path)?;
+        if remove_root {
+            std::fs::remove_dir(path)?;
+        }
     }
     Ok(())
 }
@@ -123,13 +132,26 @@ rmdir /sys/fs/cgroup/adventofcode-2022
 
 pub struct Cgroup {
     enabled: bool,
+    systemd: bool,
+    cgroup_root: Option<String>,
 }
 
 impl Cgroup {
-    pub fn new(enable_cgroup: bool) -> Self {
+    pub fn new(enable_cgroup: bool, use_systemd: bool) -> Self {
+        let root = if !use_systemd {
+            Some("/sys/fs/cgroup/adventofcode-2022".to_owned())
+        } else {
+            None
+        };
         Self {
             enabled: enable_cgroup,
+            systemd: use_systemd,
+            cgroup_root: root,
         }
+    }
+
+    fn get_cgroup_root(&self) -> &str {
+        self.cgroup_root.as_ref().unwrap()
     }
 }
 
@@ -137,9 +159,56 @@ impl Resource for Cgroup {
     fn init(&mut self) -> Result<()> {
         // initialize cgroupv2 with root if possible
         if self.enabled {
+            if self.systemd {
+                // use dbus to ask systemd give a delegated cgroup
+                let connection = Connection::session()?;
+                let systemd_manager = ManagerProxyBlocking::new(&connection)?;
+                // pids MUST BE an u32 array, otherwise System.Error.ENXIO will be returned by systemd
+                // Error occurred at https://github.com/systemd/systemd/blob/de712a85ffb7ea129536b4e14a1f5cb48f7116f7/src/core/dbus-scope.c#LL90C21-L90C51
+                // where "u" means unsigned 32-bit integer
+                let pids = [getpid().as_raw() as u32];
+                // remove failed scope
+                let _err = systemd_manager.reset_failed_unit("adventofcode-transient.scope");
+
+                let removed_jobs = systemd_manager.receive_job_removed()?;
+
+                let job = systemd_manager.start_transient_unit(
+                    "adventofcode-transient.scope",
+                    "replace",
+                    &[
+                        ("PIDs", pids[..].into()),
+                        ("Description", "Transient cgroup for benchmarking".into()),
+                    ],
+                    &[],
+                )?;
+
+                for signal in removed_jobs {
+                    let args = signal.args()?;
+
+                    if args.job == job.as_ref() {
+                        break;
+                    }
+                }
+
+                let scope_dbus_path = systemd_manager.get_unit("adventofcode-transient.scope")?;
+                let systemd_scope = ScopeProxyBlocking::builder(&connection)
+                    .path(scope_dbus_path)?
+                    .build()?;
+                let cgroup_path = systemd_scope.control_group()?;
+                let cgroup_root = format!("/sys/fs/cgroup{}", cgroup_path);
+                self.cgroup_root = Some(cgroup_root.to_owned());
+
+                // write current pid to day0/cgroup.procs
+                let cgroup_root = Path::new(cgroup_root.as_str());
+                std::fs::create_dir_all(cgroup_root.join("day0"))?;
+                std::fs::write(
+                    cgroup_root.join("day0/cgroup.procs"),
+                    getpid().as_raw().to_string(),
+                )?;
+            }
             if let Err(e) = {
-                if Uid::current().is_root() {
-                    rust_initialize_cgroup()
+                if self.systemd || Uid::current().is_root() {
+                    rust_initialize_cgroup(self.get_cgroup_root())
                 } else {
                     sudo_initialize_cgroup()
                 }
@@ -153,10 +222,20 @@ impl Resource for Cgroup {
 
     fn cleanup(&self) -> Result<()> {
         if self.enabled {
-            if !Uid::current().is_root() {
+            if self.systemd {
+                let cgroup_root = Path::new(self.cgroup_root.as_ref().unwrap());
+                // disable memory subtree control
+                std::fs::write(cgroup_root.join("cgroup.subtree_control"), "-memory")?;
+                // move current process to root cgroup tree node
+                std::fs::write(
+                    cgroup_root.join("cgroup.procs"),
+                    getpid().as_raw().to_string(),
+                )?;
+            }
+            if !(Uid::current().is_root() || self.systemd) {
                 sudo_cleanup_cgroup()?;
             } else {
-                rust_cleanup_cgroup()?;
+                rust_cleanup_cgroup(self.get_cgroup_root(), !self.systemd)?;
             }
         }
         Ok(())
@@ -167,11 +246,12 @@ impl Resource for Cgroup {
         if self.enabled {
             // be sophisticated: no heap allocation inside pre_exec
             proc_file_fd = open(
-                Path::new(CGROUP_DIR)
+                Path::new(self.get_cgroup_root())
                     .join(format!("day{}-{}", day, part))
-                    .join("cgroup.procs").as_os_str(),
-                    OFlag::O_WRONLY,
-                    Mode::empty()
+                    .join("cgroup.procs")
+                    .as_os_str(),
+                OFlag::O_WRONLY,
+                Mode::empty(),
             )?;
             unsafe {
                 cmd.pre_exec(move || {
@@ -207,7 +287,7 @@ impl Resource for Cgroup {
         let peak = if self.enabled {
             let mut peak = String::new();
             std::fs::File::open(
-                Path::new(CGROUP_DIR)
+                Path::new(self.get_cgroup_root())
                     .join(format!("day{}-{}", day, part))
                     .join("memory.peak"),
             )?
