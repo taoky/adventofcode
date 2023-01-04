@@ -39,6 +39,7 @@ enum Mode {
 enum Resourcer {
     /// Use cgroupv2 to measure memory usage (memory.peak), root permission required
     Cgroup,
+    #[cfg(feature = "systemd")]
     /// Use dbus to let systemd delegate cgroupv2 subtree to current user
     CgroupSystemd,
     /// Use fork(), pipe() and getrusage() to measure memory usage (RSS) and time used (user + kernel)
@@ -47,6 +48,15 @@ enum Resourcer {
     Poll,
     /// Just measure time used
     Pure,
+}
+
+impl Resourcer {
+    fn is_cgroup(&self) -> bool {
+        #[cfg(feature = "systemd")]
+        return *self == Resourcer::Cgroup || *self == Resourcer::CgroupSystemd;
+        #[cfg(not(feature = "systemd"))]
+        return *self == Resourcer::Cgroup;
+    }
 }
 
 fn humanize(size: usize) -> String {
@@ -72,6 +82,7 @@ fn main() {
     });
     let mut resourcer: Box<dyn Resource> = match cli.resourcer {
         Resourcer::Cgroup => Box::new(Cgroup::new(true, false)),
+        #[cfg(feature = "systemd")]
         Resourcer::CgroupSystemd => Box::new(Cgroup::new(true, true)),
         Resourcer::Getrusage => Box::new(GetRusage::default()),
         Resourcer::Poll => Box::new(Poll::default()),
@@ -79,7 +90,7 @@ fn main() {
     };
 
     if let Err(e) = resourcer.init() {
-        if cli.resourcer == Resourcer::Cgroup || cli.resourcer == Resourcer::CgroupSystemd {
+        if cli.resourcer.is_cgroup() {
             eprintln!("Failed to initialize cgroup: {}", e);
             eprintln!("{}", e.backtrace());
             eprintln!("Will not calculate memory usage.");
@@ -126,7 +137,7 @@ fn main() {
 
     if let Err(e) = { resourcer.cleanup() } {
         eprintln!("Failed to cleanup: {}", e);
-        if cli.resourcer == Resourcer::Cgroup || cli.resourcer == Resourcer::CgroupSystemd {
+        if cli.resourcer.is_cgroup() {
             eprintln!("{}", e.backtrace());
         }
     }

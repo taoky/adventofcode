@@ -1,8 +1,10 @@
 use crate::utils::{
     day_part_iterator,
-    systemd::{ManagerProxyBlocking, ScopeProxyBlocking},
     u32_to_bytes,
 };
+
+#[cfg(feature = "systemd")]
+use crate::utils::systemd::{ManagerProxyBlocking, ScopeProxyBlocking};
 
 use super::{Measurement, Resource};
 use std::{
@@ -16,8 +18,10 @@ use anyhow::Result;
 use nix::{
     fcntl::{open, OFlag},
     sys::stat::Mode,
-    unistd::{close, getpid, write, Pid, Uid},
+    unistd::{close, getpid, write, Uid},
 };
+
+#[cfg(feature = "systemd")]
 use zbus::blocking::Connection;
 
 fn sudo(script: &str, explanation: &str) -> Result<()> {
@@ -103,7 +107,7 @@ echo {} > /sys/fs/cgroup/adventofcode-2022/day0/cgroup.procs
         uid,
         uid,
         uid,
-        Pid::this()
+        getpid().as_raw()
     );
     for (day, part) in day_part_iterator() {
         script += format!(
@@ -132,6 +136,7 @@ rmdir /sys/fs/cgroup/adventofcode-2022
 
 pub struct Cgroup {
     enabled: bool,
+    #[cfg(feature = "systemd")]
     systemd: bool,
     cgroup_root: Option<String>,
 }
@@ -145,6 +150,7 @@ impl Cgroup {
         };
         Self {
             enabled: enable_cgroup,
+            #[cfg(feature = "systemd")]
             systemd: use_systemd,
             cgroup_root: root,
         }
@@ -159,6 +165,7 @@ impl Resource for Cgroup {
     fn init(&mut self) -> Result<()> {
         // initialize cgroupv2 with root if possible
         if self.enabled {
+            #[cfg(feature = "systemd")]
             if self.systemd {
                 // use dbus to ask systemd give a delegated cgroup
                 let connection = Connection::session()?;
@@ -207,9 +214,16 @@ impl Resource for Cgroup {
                 )?;
             }
             if let Err(e) = {
-                if self.systemd || Uid::current().is_root() {
+                if Uid::current().is_root() {
                     rust_initialize_cgroup(self.get_cgroup_root())
                 } else {
+                    #[cfg(feature = "systemd")]
+                    if self.systemd {
+                        rust_initialize_cgroup(self.get_cgroup_root())
+                    } else {
+                        sudo_initialize_cgroup()
+                    }
+                    #[cfg(not(feature = "systemd"))]
                     sudo_initialize_cgroup()
                 }
             } {
@@ -222,6 +236,7 @@ impl Resource for Cgroup {
 
     fn cleanup(&self) -> Result<()> {
         if self.enabled {
+            #[cfg(feature = "systemd")]
             if self.systemd {
                 let cgroup_root = Path::new(self.cgroup_root.as_ref().unwrap());
                 // disable memory subtree control
@@ -232,10 +247,19 @@ impl Resource for Cgroup {
                     getpid().as_raw().to_string(),
                 )?;
             }
-            if !(Uid::current().is_root() || self.systemd) {
+
+            if !Uid::current().is_root() {
+                #[cfg(feature = "systemd")]
+                if self.systemd {
+                    rust_cleanup_cgroup(self.get_cgroup_root(), false)?;
+                    return Ok(())
+                }
                 sudo_cleanup_cgroup()?;
             } else {
+                #[cfg(feature = "systemd")]
                 rust_cleanup_cgroup(self.get_cgroup_root(), !self.systemd)?;
+                #[cfg(not(feature = "systemd"))]
+                rust_cleanup_cgroup(self.get_cgroup_root(), true)?;
             }
         }
         Ok(())

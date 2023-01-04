@@ -4,6 +4,7 @@ pub mod day23;
 pub mod day24;
 pub mod day7;
 
+#[cfg(feature = "systemd")]
 pub mod systemd;
 
 // for measurement program
