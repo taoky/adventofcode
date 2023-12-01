@@ -1,0 +1,39 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.35.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           adventofcode
+version:        0.0.0
+build-type:     Simple
+
+library
+  exposed-modules:
+      Day1
+  other-modules:
+      Paths_adventofcode
+  hs-source-dirs:
+      src
+  ghc-options: -threaded
+  build-depends:
+      base
+    , containers
+    , text
+    , time
+  default-language: GHC2021
+
+executable adventofcode-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_adventofcode
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      adventofcode
+    , base
+    , containers
+    , text
+    , time
+  default-language: GHC2021
