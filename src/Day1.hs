@@ -4,13 +4,12 @@ import Prelude (print)
 import Data.Char (digitToInt, isDigit)
 import Data.List (find)
 import Data.Text.Read (decimal)
-import RIO.Text (Text)
 import RIO.Text qualified as T
 import RIO.Text.Partial qualified as T'
 import RIO
 
 extractFirstAndLastDigits :: Text -> Text
-extractFirstAndLastDigits s = T.singleton (T'.head (T.filter isDigit s)) `T.append` T.singleton (T'.last (T.filter isDigit s))
+extractFirstAndLastDigits s = T.singleton (T'.head (T.filter isDigit s)) <> T.singleton (T'.last (T.filter isDigit s))
 
 wordToDigit :: [(Text, Int)]
 wordToDigit =
@@ -44,8 +43,8 @@ getFirstLineNumber s r = go r 1
     go :: Bool -> Int -> Int
     go isReverse lineNumber = do
       -- starts from 1, 2, 3, ... characters
-      let (first, rest) = T.splitAt (if isReverse then T.length s - lineNumber else lineNumber) s
-      case findFirstNumeric (if isReverse then rest else first) of
+      let (fst_, rst) = T.splitAt (if isReverse then T.length s - lineNumber else lineNumber) s
+      case findFirstNumeric (if isReverse then rst else fst_) of
         Just number -> number
         Nothing -> go isReverse (lineNumber + 1)
 
