@@ -40,7 +40,6 @@ library
   ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2
   build-depends:
       base
-    , containers
     , rio
     , text
   default-language: GHC2021
@@ -77,5 +76,6 @@ executable adventofcode-exe
   build-depends:
       adventofcode
     , base
+    , optparse-applicative
     , rio
   default-language: GHC2021

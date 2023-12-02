@@ -3,7 +3,6 @@ name: adventofcode
 library:
   source-dirs: src
   dependencies:
-    - containers
     - text
 
 executables:
@@ -16,6 +15,7 @@ executables:
     - '"-with-rtsopts=-N -qn1"'
     dependencies:
     - adventofcode
+    - optparse-applicative
 
 dependencies:
 - base
