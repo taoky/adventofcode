@@ -29,16 +29,14 @@ processLine line =
           green = snd $ head $ filter (\x -> fst x == Green) maxInGroup
           blue = snd $ head $ filter (\x -> fst x == Blue) maxInGroup
           checkColorCount x =
-            case T.split (== ' ') x of
-              (countText : color) ->
-                let count = stringToUnsigned countText
-                 in ( case color of
-                        ["red"] -> (Red, count)
-                        ["green"] -> (Green, count)
-                        ["blue"] -> (Blue, count)
-                        _ -> error $ "unknown color" <> show color
-                    )
-              _ -> error $ "unknown color" <> show x
+            let r = case T.split (== ' ') x of
+                  (countText : color) -> (color, stringToUnsigned countText)
+                  _ -> error $ "unknown color" <> show x
+             in case r of
+                  (["red"], count) -> (Red, count)
+                  (["green"], count) -> (Green, count)
+                  (["blue"], count) -> (Blue, count)
+                  _ -> error $ "unknown color" <> show x
        in Retrieval {game, red, green, blue}
     _ -> error "unknown line"
 
