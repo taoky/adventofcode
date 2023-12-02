@@ -15,12 +15,12 @@ library
       Paths_adventofcode
   hs-source-dirs:
       src
-  ghc-options: -threaded
+  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2
   build-depends:
       base
     , containers
+    , rio
     , text
-    , time
   default-language: GHC2021
 
 executable adventofcode-exe
@@ -29,11 +29,9 @@ executable adventofcode-exe
       Paths_adventofcode
   hs-source-dirs:
       app
-  ghc-options: -threaded -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2 -threaded -rtsopts "-with-rtsopts=-N -qn1"
   build-depends:
       adventofcode
     , base
-    , containers
-    , text
-    , time
+    , rio
   default-language: GHC2021

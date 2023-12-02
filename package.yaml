@@ -2,6 +2,9 @@ name: adventofcode
 
 library:
   source-dirs: src
+  dependencies:
+    - containers
+    - text
 
 executables:
   adventofcode-exe:
@@ -10,17 +13,30 @@ executables:
     ghc-options:
     - -threaded
     - -rtsopts
-    - -with-rtsopts=-N
+    - '"-with-rtsopts=-N -qn1"'
     dependencies:
     - adventofcode
 
 dependencies:
 - base
-- time
-- text
-- containers
+- rio
 
 ghc-options:
-- -threaded
+- -Weverything
+- -Wno-all-missed-specializations
+- -Wno-implicit-lift
+- -Wno-missed-specializations
+- -Wno-missing-exported-signatures
+- -Wno-missing-import-lists
+- -Wno-missing-kind-signatures
+- -Wno-missing-local-signatures
+- -Wno-missing-safe-haskell-mode
+- -Wno-monomorphism-restriction
+- -Wno-prepositive-qualified-module
+- -Wno-safe
+- -Wno-unsafe
+- -Wno-unticked-promoted-constructors
+- -freverse-errors
+- -O2
 
 language: GHC2021
