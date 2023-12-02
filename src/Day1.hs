@@ -1,12 +1,13 @@
 module Day1 (solve1, solve2) where
 
+import Prelude (print)
 import Data.Char (digitToInt, isDigit)
 import Data.List (find)
 import Data.Text.Read (decimal)
 import RIO.Text (Text)
 import RIO.Text qualified as T
 import RIO.Text.Partial qualified as T'
-import Prelude
+import RIO
 
 extractFirstAndLastDigits :: Text -> Text
 extractFirstAndLastDigits s = T.singleton (T'.head (T.filter isDigit s)) `T.append` T.singleton (T'.last (T.filter isDigit s))

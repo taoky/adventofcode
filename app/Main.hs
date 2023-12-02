@@ -1,11 +1,11 @@
 {-# OPTIONS -Wno-unused-top-binds #-}
 module Main (main) where
 
+import Prelude (putStrLn)
 import Day1 qualified
+import Day2 qualified
 import Options.Applicative
-import RIO (readFileUtf8)
-import RIO.Text (Text)
-import Prelude
+import RIO
 
 newtype Options = Options
   { day :: Maybe Int
@@ -36,7 +36,7 @@ main = solutions =<< execParser opts
         )
 
 dayToModule :: [(Int, [Text -> IO ()])]
-dayToModule = [(1, [Day1.solve1, Day1.solve2])]
+dayToModule = [(1, [Day1.solve1, Day1.solve2]), (2, [Day2.solve1, Day2.solve2])]
 
 solutions :: Options -> IO ()
 solutions (Options day) = do
