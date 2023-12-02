@@ -12,6 +12,7 @@ library
   exposed-modules:
       Day1
       Day2
+      Utils
   other-modules:
       Paths_adventofcode
   hs-source-dirs:
@@ -38,10 +39,9 @@ library
       TemplateHaskell
       TypeFamilies
       ViewPatterns
-  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2
+  ghc-options: -Wall -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2
   build-depends:
       base
-    , regex-pcre
     , rio
     , text
   default-language: GHC2021
@@ -74,7 +74,7 @@ executable adventofcode-exe
       TemplateHaskell
       TypeFamilies
       ViewPatterns
-  ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2 -threaded -rtsopts "-with-rtsopts=-N -qn1"
+  ghc-options: -Wall -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2 -threaded -rtsopts "-with-rtsopts=-N -qn1"
   build-depends:
       adventofcode
     , base

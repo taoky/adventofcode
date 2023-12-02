@@ -4,7 +4,9 @@ library:
   source-dirs: src
   dependencies:
     - text
-    - regex-pcre
+    # https://williamyaoh.com/posts/2019-04-11-cheatsheet-to-regexes-in-haskell.html
+    # - regex-tdfa
+    # - regex-tdfa-text
 
 executables:
   adventofcode-exe:
@@ -23,7 +25,7 @@ dependencies:
 - rio
 
 ghc-options:
-- -Weverything
+- -Wall
 - -Wno-all-missed-specializations
 - -Wno-implicit-lift
 - -Wno-missed-specializations

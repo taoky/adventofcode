@@ -3,10 +3,10 @@ module Day1 (solve1, solve2) where
 import Prelude (print)
 import Data.Char (digitToInt, isDigit)
 import Data.List (find)
-import Data.Text.Read (decimal)
 import RIO.Text qualified as T
 import RIO.Text.Partial qualified as T'
 import RIO
+import Utils (stringToUnsigned)
 
 extractFirstAndLastDigits :: Text -> Text
 extractFirstAndLastDigits s = T.singleton (T'.head (T.filter isDigit s)) <> T.singleton (T'.last (T.filter isDigit s))
@@ -51,14 +51,10 @@ getFirstLineNumber s r = go r 1
 getLineNumber :: Text -> Int
 getLineNumber s = 10 * getFirstLineNumber s False + getFirstLineNumber s True
 
--- throws error when it could not parse
-stringToInt :: Text -> Int
-stringToInt str = either (error . show) fst (decimal str)
-
 solve1 :: Text -> IO ()
 solve1 input =
   let linesOfInput = T.lines input
-      filteredLines = map (stringToInt . extractFirstAndLastDigits) linesOfInput
+      filteredLines = map (stringToUnsigned . extractFirstAndLastDigits) linesOfInput
    in print $ sum filteredLines
 
 solve2 :: Text -> IO ()
