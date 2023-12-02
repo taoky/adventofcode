@@ -1,12 +1,12 @@
 module Day1 (solve1, solve2) where
 
-import Prelude (print)
 import Data.Char (digitToInt, isDigit)
 import Data.List (find)
+import RIO
 import RIO.Text qualified as T
 import RIO.Text.Partial qualified as T'
-import RIO
 import Utils (stringToUnsigned)
+import Prelude (print)
 
 extractFirstAndLastDigits :: Text -> Text
 extractFirstAndLastDigits s = T.singleton (T'.head (T.filter isDigit s)) <> T.singleton (T'.last (T.filter isDigit s))
@@ -29,24 +29,23 @@ searchSubstring s = fmap snd . find (\(key, _) -> T.isInfixOf key s)
 
 -- digit, or words in wordToDigit
 findFirstNumeric :: Text -> Maybe Int
-findFirstNumeric s = do
+findFirstNumeric s =
   let maybeDigit = T.find isDigit s
-  case maybeDigit of
-    Just digit -> Just (digitToInt digit)
-    Nothing -> do
-      searchSubstring s wordToDigit
+   in case maybeDigit of
+        Just digit -> Just (digitToInt digit)
+        Nothing -> searchSubstring s wordToDigit
 
 -- string -> isReverse -> first line number
 getFirstLineNumber :: Text -> Bool -> Int
 getFirstLineNumber s r = go r 1
   where
     go :: Bool -> Int -> Int
-    go isReverse lineNumber = do
+    go isReverse lineNumber =
       -- starts from 1, 2, 3, ... characters
       let (fst_, rst) = T.splitAt (if isReverse then T.length s - lineNumber else lineNumber) s
-      case findFirstNumeric (if isReverse then rst else fst_) of
-        Just number -> number
-        Nothing -> go isReverse (lineNumber + 1)
+       in case findFirstNumeric (if isReverse then rst else fst_) of
+            Just number -> number
+            Nothing -> go isReverse (lineNumber + 1)
 
 getLineNumber :: Text -> Int
 getLineNumber s = 10 * getFirstLineNumber s False + getFirstLineNumber s True
