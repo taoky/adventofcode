@@ -26,20 +26,6 @@ dependencies:
 
 ghc-options:
 - -Wall
-- -Wno-all-missed-specializations
-- -Wno-implicit-lift
-- -Wno-missed-specializations
-- -Wno-missing-exported-signatures
-- -Wno-missing-import-lists
-- -Wno-missing-kind-signatures
-- -Wno-missing-local-signatures
-- -Wno-missing-safe-haskell-mode
-- -Wno-monomorphism-restriction
-- -Wno-prepositive-qualified-module
-- -Wno-safe
-- -Wno-unsafe
-- -Wno-unticked-promoted-constructors
-- -freverse-errors
 - -O2
 
 language: GHC2021
