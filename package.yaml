@@ -40,3 +40,26 @@ ghc-options:
 - -O2
 
 language: GHC2021
+
+default-extensions:
+- DataKinds
+- DefaultSignatures
+- DeriveAnyClass
+- DerivingStrategies
+- DuplicateRecordFields
+- FunctionalDependencies
+- GADTs
+- LambdaCase
+- LexicalNegation
+- LiberalTypeSynonyms
+- MultiWayIf
+- NoImplicitPrelude
+- NumDecimals
+- OverloadedRecordDot
+- OverloadedStrings
+- PatternSynonyms
+- QuasiQuotes
+- RecordWildCards
+- TemplateHaskell
+- TypeFamilies
+- ViewPatterns

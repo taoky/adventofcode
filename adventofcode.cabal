@@ -15,6 +15,28 @@ library
       Paths_adventofcode
   hs-source-dirs:
       src
+  default-extensions:
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      LexicalNegation
+      LiberalTypeSynonyms
+      MultiWayIf
+      NoImplicitPrelude
+      NumDecimals
+      OverloadedRecordDot
+      OverloadedStrings
+      PatternSynonyms
+      QuasiQuotes
+      RecordWildCards
+      TemplateHaskell
+      TypeFamilies
+      ViewPatterns
   ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2
   build-depends:
       base
@@ -29,6 +51,28 @@ executable adventofcode-exe
       Paths_adventofcode
   hs-source-dirs:
       app
+  default-extensions:
+      DataKinds
+      DefaultSignatures
+      DeriveAnyClass
+      DerivingStrategies
+      DuplicateRecordFields
+      FunctionalDependencies
+      GADTs
+      LambdaCase
+      LexicalNegation
+      LiberalTypeSynonyms
+      MultiWayIf
+      NoImplicitPrelude
+      NumDecimals
+      OverloadedRecordDot
+      OverloadedStrings
+      PatternSynonyms
+      QuasiQuotes
+      RecordWildCards
+      TemplateHaskell
+      TypeFamilies
+      ViewPatterns
   ghc-options: -Weverything -Wno-all-missed-specializations -Wno-implicit-lift -Wno-missed-specializations -Wno-missing-exported-signatures -Wno-missing-import-lists -Wno-missing-kind-signatures -Wno-missing-local-signatures -Wno-missing-safe-haskell-mode -Wno-monomorphism-restriction -Wno-prepositive-qualified-module -Wno-safe -Wno-unsafe -Wno-unticked-promoted-constructors -freverse-errors -O2 -threaded -rtsopts "-with-rtsopts=-N -qn1"
   build-depends:
       adventofcode
