@@ -15,8 +15,8 @@ read2DArray input = map T.unpack $ T.lines input
 generateMask2DArray :: [[Char]] -> [[Bool]]
 generateMask2DArray = map (map (\x -> not (isDigit x || x == '.')))
 
-generateGear2DArray :: [[Char]] -> [[Bool]]
-generateGear2DArray = map (map (== '*'))
+-- generateGear2DArray :: [[Char]] -> [[Bool]]
+-- generateGear2DArray = map (map (== '*'))
 
 safeModify :: a -> [[a]] -> Int -> Int -> [[a]]
 safeModify v l x y
@@ -24,11 +24,18 @@ safeModify v l x y
   | y < 0 || y >= length (head l) = l
   | otherwise = take x l ++ [take y (l !! x) ++ [v] ++ drop (y + 1) (l !! x)] ++ drop (x + 1) l
 
+adjustments :: (Int, Int) -> [(Int, Int)]
+adjustments (x, y) = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1), (x - 1, y - 1), (x - 1, y + 1), (x + 1, y - 1), (x + 1, y + 1)]
+
 setAdjacent2DArray :: [[Bool]] -> (Int, Int) -> [[Bool]]
 setAdjacent2DArray m (x, y) =
   let setTrue = safeModify True
-      adjustments = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1), (x - 1, y - 1), (x - 1, y + 1), (x + 1, y - 1), (x + 1, y + 1)]
-   in foldl (\acc (a, b) -> setTrue acc a b) m adjustments
+   in foldl (\acc (a, b) -> setTrue acc a b) m (adjustments (x, y))
+
+fastFindGearAdjacentDigitPos :: [[Char]] -> (Int, Int) -> [(Int, Int)]
+fastFindGearAdjacentDigitPos m pos =
+  let adjacents = adjustments pos
+   in filter (\(x, y) -> isDigit $ m !! x !! y) adjacents
 
 getPos :: [[a]] -> ((Int, Int) -> [[a]] -> Bool) -> [(Int, Int)]
 getPos m cond = [(x, y) | x <- [0 .. length m - 1], y <- [0 .. length (head m) - 1], cond (x, y) m]
@@ -52,8 +59,12 @@ getNumbers :: [[Bool]] -> [[Char]] -> [Int]
 getNumbers mask' map_ =
   let -- find all (x, y) satisfying mask[x][y] and isDigit map[x][y]
       truePos = getPos map_ (\(x, y) map_' -> mask' !! x !! y && isDigit (map_' !! x !! y))
-      getNumberLeft (x, y) = (x, findHead (map_ !! x) y)
-      leftPos = nub $ map getNumberLeft truePos
+   in getNumbersWithPosGiven map_ truePos
+
+getNumbersWithPosGiven :: [[Char]] -> [(Int, Int)] -> [Int]
+getNumbersWithPosGiven map_ pos =
+  let getNumberLeft (x, y) = (x, findHead (map_ !! x) y)
+      leftPos = nub $ getNumberLeft <$> pos
       -- Assuming that y is the first digit
       getNumber (x, y) =
         let -- find minimal ly <= y: isDigit map[x][ly] ly--
@@ -70,16 +81,12 @@ solve1 input =
       adjMask = generateAdjacent2DArray mask'
    in print $ sum $ getNumbers adjMask map'
 
---   print $ getNumbers adjMask map'
-
--- SLOW!
 solve2 :: Text -> IO ()
 solve2 input =
   let map' = read2DArray input
-      mask' = generateGear2DArray map'
-      gearPos = getPos map' (\(x, y) _ -> mask' !! x !! y)
+      gearPos = getPos map' (\(x, y) map_' -> map_' !! x !! y == '*')
       getOneResult (x, y) =
-        let adjMask = setAdjacent2DArray mask' (x, y)
-            numbers = getNumbers adjMask map'
+        let posList = fastFindGearAdjacentDigitPos map' (x, y)
+            numbers = getNumbersWithPosGiven map' posList
          in if length numbers == 2 then numbers !! 0 * numbers !! 1 else 0
    in print $ sum $ map getOneResult gearPos
