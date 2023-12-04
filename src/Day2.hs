@@ -4,7 +4,7 @@ import Data.List (groupBy, maximumBy, sortBy)
 import Data.Text qualified as T
 import RIO
 import RIO.List.Partial (head, last)
-import Utils (stringToUnsigned)
+import Utils
 import Prelude (print)
 
 data Color = Red | Green | Blue deriving (Show, Eq, Ord)
@@ -19,26 +19,23 @@ getGame s = stringToUnsigned $ last $ T.split (== ' ') s
 processLine :: Text -> Retrieval
 processLine line =
   -- split by ":"
-  case T.splitOn ": " line of
-    (gameText : bagText) ->
-      let game = getGame gameText
-          bag = concatMap (T.splitOn ", ") $ concatMap (T.splitOn "; ") bagText
-          group = groupBy (\x y -> fst x == fst y) $ sortBy (comparing fst) $ map checkColorCount bag
-          maxInGroup = map (maximumBy (comparing snd)) group
-          red = snd $ head $ filter (\x -> fst x == Red) maxInGroup
-          green = snd $ head $ filter (\x -> fst x == Green) maxInGroup
-          blue = snd $ head $ filter (\x -> fst x == Blue) maxInGroup
-          checkColorCount x =
-            let r = case T.split (== ' ') x of
-                  (countText : color) -> (color, stringToUnsigned countText)
-                  _ -> error $ "unknown color" <> show x
-             in case r of
-                  (["red"], count) -> (Red, count)
-                  (["green"], count) -> (Green, count)
-                  (["blue"], count) -> (Blue, count)
-                  _ -> error $ "unknown color" <> show x
-       in Retrieval {game, red, green, blue}
-    _ -> error "unknown line"
+  let (gameText, bagText) = splitTwo ": " line
+      game = getGame gameText
+      bag = concatMap (T.splitOn ", ") $ T.splitOn "; " bagText
+      group = groupBy (\x y -> fst x == fst y) $ sortBy (comparing fst) $ map checkColorCount bag
+      maxInGroup = map (maximumBy (comparing snd)) group
+      red = snd $ head $ filter (\x -> fst x == Red) maxInGroup
+      green = snd $ head $ filter (\x -> fst x == Green) maxInGroup
+      blue = snd $ head $ filter (\x -> fst x == Blue) maxInGroup
+      checkColorCount x =
+        let (countText, color) = splitTwo " " x
+            count = stringToUnsigned countText
+         in case color of
+              "red" -> (Red, count)
+              "green" -> (Green, count)
+              "blue" -> (Blue, count)
+              _ -> error $ "unknown color" <> show x
+   in Retrieval {game, red, green, blue}
 
 -- The Elf would first like to know which games would have been
 -- possible if the bag contained only

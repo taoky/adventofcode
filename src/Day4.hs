@@ -2,7 +2,7 @@ module Day4 (solve1, solve2) where
 
 import Data.Text qualified as T
 import RIO
-import RIO.List.Partial (head, last, (!!))
+import RIO.List.Partial (last, (!!))
 import Utils
 import Prelude (print)
 
@@ -11,18 +11,13 @@ extractCards x = map stringToUnsigned $ filter (not . T.null) $ T.split (== ' ')
 
 processLine :: Text -> (Int, Int)
 processLine line =
-  case T.splitOn ": " line of
-    (cardText : resultText) ->
-      let card = stringToUnsigned $ last $ T.split (== ' ') cardText
-          (win, chosen) = case T.splitOn " | " $ head resultText of
-            (winText : chosenText) ->
-              let winIDs = extractCards winText
-                  chosenIDs = extractCards $ head chosenText
-               in (winIDs, chosenIDs)
-            _ -> error "unknown cards"
-          winCnt = length $ filter (`elem` win) chosen
-       in (card, winCnt)
-    _ -> error "unknown line"
+  let (cardText, resultText) = splitTwo ": " line
+      card = stringToUnsigned $ last $ T.split (== ' ') cardText
+      (winText, chosenText) = splitTwo " | " resultText
+      winIDs = extractCards winText
+      chosenIDs = extractCards chosenText
+      winCnt = length $ filter (`elem` winIDs) chosenIDs
+   in (card, winCnt)
 
 -- CardIdx, WinCnt, CardCnt -> Mask
 calMask :: Int -> Int -> Int -> [Int]

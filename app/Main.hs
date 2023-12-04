@@ -61,6 +61,7 @@ solutions (Options day) = do
       mapM_
         ( \(d, x) -> do
             contents <- readFileUtf8 ("input/day" ++ show d)
+            putStrLn ("Day " ++ show d)
             mapM_ (\f -> f contents) x
         )
         dayToModule
