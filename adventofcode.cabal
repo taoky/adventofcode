@@ -16,6 +16,7 @@ library
       Day2
       Day3
       Day4
+      Day5
       Utils
   other-modules:
       Paths_adventofcode
@@ -45,9 +46,11 @@ library
       ViewPatterns
   ghc-options: -Wall -O2
   build-depends:
-      base
+      attoparsec
+    , base
     , rio
     , text
+    , unordered-containers
   default-language: GHC2021
 
 executable adventofcode-exe

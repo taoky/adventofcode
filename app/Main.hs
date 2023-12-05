@@ -5,12 +5,14 @@ import Day1 qualified
 import Day2 qualified
 import Day3 qualified
 import Day4 qualified
+import Day5 qualified
 import Options.Applicative
 import RIO
 import Prelude (putStrLn)
 
-newtype Options = Options
+data Options = Options
   { day :: Maybe Int
+  , test :: Bool
   }
 
 options :: Parser Options
@@ -24,6 +26,11 @@ options =
               <> metavar "DAY"
               <> help "Day to run"
           )
+      )
+    <*> switch
+      ( long "test"
+          <> short 't'
+          <> help "Use file name with .test suffix"
       )
 
 main :: IO ()
@@ -42,17 +49,21 @@ dayToModule =
   [ (1, [Day1.solve1, Day1.solve2]),
     (2, [Day2.solve1, Day2.solve2]),
     (3, [Day3.solve1, Day3.solve2]),
-    (4, [Day4.solve1, Day4.solve2])
+    (4, [Day4.solve1, Day4.solve2]),
+    (5, [Day5.solve1, Day5.solve2])
   ]
 
+getFileName :: Int -> Bool -> String
+getFileName day test = "input/day" ++ show day ++ (if test then ".test" else "")
+
 solutions :: Options -> IO ()
-solutions (Options day) = do
+solutions (Options day test) = do
   case day of
     Just d -> do
       let m = lookup d dayToModule
       case m of
         Just x -> do
-          contents <- readFileUtf8 ("input/day" ++ show d)
+          contents <- readFileUtf8 (getFileName d test)
           mapM_ (\f -> f contents) x
         Nothing -> putStrLn "No such day"
     Nothing -> do
@@ -60,7 +71,7 @@ solutions (Options day) = do
       putStrLn "Run all"
       mapM_
         ( \(d, x) -> do
-            contents <- readFileUtf8 ("input/day" ++ show d)
+            contents <- readFileUtf8 (getFileName d test)
             putStrLn ("Day " ++ show d)
             mapM_ (\f -> f contents) x
         )
