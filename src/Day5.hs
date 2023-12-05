@@ -38,7 +38,7 @@ parser = do
     P.skipSpace
     pure $ H.singleton from (to', mapItems)
   P.endOfInput
-  let m = foldl' H.union H.empty ml
+  let m = mconcat ml
   pure (seeds, m)
 
 getDest :: Int -> [MapItem] -> Int
@@ -72,6 +72,7 @@ findLocationWithRange oldRange k m =
   let (to', mapItems) = m H'.! k
       convertedMapItems = map (\x -> (sourceStart x, sourceStart x + rangeLength x - 1)) mapItems
       pointsofRange = nub $ sort ([x | x <- concatMap (\(a, b) -> [a, b]) convertedMapItems, x >= fst oldRange && x <= snd oldRange] ++ [fst oldRange, snd oldRange])
+      -- [1, 2, 3, 4, ...] -> [(1, 2), (2, 3), ...]. If length is 1, then [(x, x)]
       rangePairs' = if length pointsofRange >= 2 then zip pointsofRange (tail pointsofRange) else [(head pointsofRange, head pointsofRange)]
       -- from second item in rangePairs' fst shall be += 1
       rangePairs = if length rangePairs' >= 2 then filter (uncurry (<=)) $ head rangePairs' : map (\(a, b) -> (a + 1, b)) (tail rangePairs') else rangePairs'
