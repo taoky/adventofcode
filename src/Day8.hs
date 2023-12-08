@@ -63,4 +63,4 @@ solve2 input =
         Right x -> x
       starts = filter (\x -> last x == 'A') $ H.keys maps
       steps = map (\start -> walk plan maps start 0 (\x -> last x == 'Z')) starts
-   in print $ foldl1' lcm steps
+   in print $ foldl1' lcm (map fromIntegral steps :: [Int64])
