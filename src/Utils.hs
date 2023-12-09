@@ -1,7 +1,7 @@
-module Utils (stringToUnsigned, charListToUnsigned, assert', splitTwo) where
+module Utils (stringToUnsigned, charListToUnsigned, assert', splitTwo, stringToSigned) where
 
 import Data.Text qualified as DT
-import Data.Text.Read (decimal)
+import Data.Text.Read (decimal, signed)
 import RIO
 import RIO.List.Partial (head)
 import RIO.Text qualified as T
@@ -9,6 +9,9 @@ import RIO.Text qualified as T
 -- throws error when it could not parse
 stringToUnsigned :: (HasCallStack) => Text -> Int
 stringToUnsigned str = either (\e -> error $ "Could not parse " ++ show str ++ ": " ++ show e) fst (decimal str)
+
+stringToSigned :: (HasCallStack) => Text -> Int
+stringToSigned str = either (\e -> error $ "Could not parse " ++ show str ++ ": " ++ show e) fst (signed decimal str)
 
 charListToUnsigned :: (HasCallStack) => [Char] -> Int
 charListToUnsigned = stringToUnsigned . T.pack

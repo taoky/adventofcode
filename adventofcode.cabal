@@ -20,6 +20,7 @@ library
       Day6
       Day7
       Day8
+      Day9
       Utils
   other-modules:
       Paths_adventofcode
