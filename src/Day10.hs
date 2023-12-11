@@ -1,3 +1,4 @@
+-- Part 2 algorithm from https://github.com/SmartHypercube/aoc2023-haskell/blob/master/src/day10.hs
 module Day10 (solve1, solve2) where
 
 import RIO
@@ -81,22 +82,40 @@ findStart pipeMap =
 
 -- dir: the direction that we come from
 -- return steps to walk until reach "Unknown" (Start)
-walk :: [[Pipe]] -> (Int, Int) -> Maybe Direction -> Maybe Int
+walk :: [[Pipe]] -> (Int, Int) -> Maybe Direction -> Maybe (Int, Int)
 walk pipeMap (x, y) dir =
   let pipe = pipeMap !! x !! y
       targets = [((x + dx dir', y + dy dir'), dir') | dir' <- allowed pipe, (\d -> (Just (rev d) /= dir) && isConnected pipeMap (x + dx dir', y + dy dir') d) dir']
+      -- from https://www.reddit.com/r/adventofcode/comments/18evyu9/comment/kcqtow6/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+      -- > Part 2 using one of my favorite facts from graphics engineering:
+      -- lets say you have an enclosed shape, and you want to color every pixel inside of it.
+      -- How do you know if a given pixel is inside the shape or not?
+      -- Well, it turns out: if you shoot a ray in any direction from the pixel
+      -- and it crosses the boundary an odd number of times, it's inside.
+      -- if it crosses an even number of times, it's outside.
+      -- Works for all enclosed shapes, even self-intersecting and non-convex ones.
+      -- --------------------------------------------------------------------------
+      -- Or another explanation:
+      -- Here we "paint color" towards left when we are going up/down
+      -- Going up will paint an area, and going down will "unpaint" this
+      -- This could easily be implemented with a counter + abs
+      -- After we got area and circumference, just use Pick's theorem
+      delta = case dir of
+        Just Up -> y
+        Just Dow -> -y
+        _ -> 0
       -- iterate over targets and return the first Just
       -- if no Just, return Nothing
-      walkInner :: [((Int, Int), Direction)] -> Maybe Int
+      walkInner :: [((Int, Int), Direction)] -> Maybe (Int, Int)
       walkInner [] = Nothing
       walkInner (((x', y'), dir') : xs) =
         let -- pipe' = trace (tshow (x, y, x', y', pipeMap !! x' !! y')) $ pipeMap !! x' !! y'
             pipe' = pipeMap !! x' !! y'
          in case pipe' of
-              Unknown -> Just 1
+              Unknown -> Just (1, abs delta)
               None -> Nothing
               _ -> case walk pipeMap (x', y') (Just dir') of
-                Just steps -> Just (steps + 1)
+                Just (steps, area) -> Just (steps + 1, abs $ area + delta)
                 Nothing -> walkInner xs
    in walkInner targets
 
@@ -104,7 +123,12 @@ solve1 :: Text -> IO ()
 solve1 input =
   let inputMap = parse input
       start = findStart inputMap
-   in print $ fromMaybe 0 (walk inputMap start Nothing) `div` 2
+   in print $ div (fst $ fromMaybe (error "unexpected result") (walk inputMap start Nothing)) 2
 
 solve2 :: Text -> IO ()
-solve2 input = print "Not implemented yet"
+solve2 input =
+  let inputMap = parse input
+      start = findStart inputMap
+      (circ, area) = fromMaybe (error "unexpected result") (walk inputMap start Nothing)
+   in -- Pick's theorem
+      print $ area - div circ 2 + 1
