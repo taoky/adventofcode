@@ -15,6 +15,7 @@ library
       Day1
       Day10
       Day11
+      Day12
       Day2
       Day3
       Day4
@@ -54,6 +55,7 @@ library
   build-depends:
       attoparsec
     , base
+    , data-memocombinators
     , rio
     , safe
     , text
