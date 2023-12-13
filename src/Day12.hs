@@ -33,13 +33,16 @@ fastCount x y =
           if null y
             then -- check if the rest of x contains hash
               if '#' `elem` x then 0 else 1
-            else case firstChar of
-              '.' -> fastCountMemo (tail x) y
-              '#' ->
-                if isPrefixedByNNonDots firstGroupCount x && (length x == firstGroupCount || (length x > firstGroupCount && x !! firstGroupCount /= '#'))
-                  then fastCountMemo (drop (firstGroupCount + 1) x) (tail y)
-                  else 0
-              _ -> fastCountMemo ("#" <> tail x) y + fastCountMemo ("." <> tail x) y
+            else
+              if length x < sum y + length y - 1
+                then 0
+                else case firstChar of
+                  '.' -> fastCountMemo (tail x) y
+                  '#' ->
+                    if isPrefixedByNNonDots firstGroupCount x && (length x == firstGroupCount || (length x > firstGroupCount && x !! firstGroupCount /= '#'))
+                      then fastCountMemo (drop (firstGroupCount + 1) x) (tail y)
+                      else 0
+                  _ -> fastCountMemo ("#" <> tail x) y + fastCountMemo ("." <> tail x) y
 
 fastCountMemo :: [Char] -> [Int] -> Int
 fastCountMemo = M.memo2 (M.list M.char) (M.list M.integral) fastCount
