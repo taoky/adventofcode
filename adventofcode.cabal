@@ -58,6 +58,7 @@ library
       attoparsec
     , base
     , data-memocombinators
+    , hashable
     , rio
     , safe
     , text

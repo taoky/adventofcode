@@ -8,6 +8,7 @@ library:
     - unordered-containers
     - safe
     - data-memocombinators
+    - hashable
     # https://williamyaoh.com/posts/2019-04-11-cheatsheet-to-regexes-in-haskell.html
     # - regex-tdfa
     # - regex-tdfa-text
