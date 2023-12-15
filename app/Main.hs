@@ -19,6 +19,7 @@ import Day15 qualified
 import Options.Applicative
 import RIO
 import Prelude (putStrLn)
+import Data.Time (getCurrentTime, diffUTCTime)
 
 data Options = Options
   { day :: Maybe Int
@@ -92,7 +93,11 @@ solutions (Options day test) = do
       mapM_
         ( \(d, x) -> do
             contents <- readFileUtf8 (getFileName d test)
-            putStrLn ("Day " ++ show d)
-            mapM_ (\f -> f contents) x
+            putStrLn ("========== Day " ++ show d ++ " ==========")
+            startTime <- getCurrentTime
+            res <- mapM_ (\f -> f contents) x
+            endTime <- getCurrentTime
+            putStrLn ("(" ++ show (diffUTCTime endTime startTime) ++ ")")
+            pure res
         )
         dayToModule

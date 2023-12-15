@@ -64,6 +64,7 @@ library
     , safe
     , text
     , unordered-containers
+    , vector
   default-language: GHC2021
 
 executable adventofcode-exe
@@ -100,4 +101,5 @@ executable adventofcode-exe
     , base
     , optparse-applicative
     , rio
+    , time
   default-language: GHC2021
