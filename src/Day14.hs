@@ -1,13 +1,14 @@
 module Day14 (solve1, solve2) where
 
 import Data.Hashable (hashWithSalt)
+import Data.Vector qualified as V
 import RIO
 import RIO.HashMap qualified as HM
 import RIO.Text qualified as T
-import qualified Data.Vector as V
 import Prelude (print)
 
 data Item = Rock | Block | Empty deriving (Show, Eq)
+
 type Matrix = V.Vector (V.Vector Item)
 
 instance Hashable Item where
@@ -21,13 +22,19 @@ instance Hashable Matrix where
 parse :: Text -> Matrix
 parse input =
   let chars = (map T.unpack $ T.lines input)
-   in V.fromList (map (V.fromList . map
-            ( \case
-                '#' -> Block
-                'O' -> Rock
-                '.' -> Empty
-                _ -> error "unexpected char"
-            )) chars)
+   in V.fromList
+        ( map
+            ( V.fromList
+                . map
+                  ( \case
+                      '#' -> Block
+                      'O' -> Rock
+                      '.' -> Empty
+                      _ -> error "unexpected char"
+                  )
+            )
+            chars
+        )
 
 -- move Rock up until it hits Block or reaches the top
 moveRockUp :: (Int, Int) -> Matrix -> (Int, Int)
