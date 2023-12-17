@@ -81,7 +81,17 @@ dijkstra map' starts stepRange =
               else
                 if HM.member minVertex visited
                   then dijkstra' visited pq''
-                  else dijkstra' visited' (foldl' (\acc v -> PQ.insert (minCost + cost minVertex v map') v acc) pq'' nextVertices)
+                  else
+                    dijkstra'
+                      visited'
+                      ( foldl'
+                          ( \acc v ->
+                            -- check if v has been visited, to speed up
+                              if HM.member v visited then acc else PQ.insert (minCost + cost minVertex v map') v acc
+                          )
+                          pq''
+                          nextVertices
+                      )
    in dijkstra' hm pq
 
 solve1 :: Text -> IO ()
