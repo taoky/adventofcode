@@ -3,15 +3,17 @@ module Day17 (solve1, solve2) where
 import Data.Char (digitToInt)
 import Data.Hashable (hashWithSalt)
 import Data.PQueue.Prio.Min qualified as PQ
+import Data.Vector qualified as V
 import RIO
 import RIO.HashMap qualified as HM
-import RIO.List.Partial (head, (!!))
 import RIO.Text qualified as T
 import Prelude (print)
 
 data Direction = Up | Dow | Lef | Righ deriving (Show, Eq)
 
 data Vertex = Vertex {x :: Int, y :: Int, dir :: Direction} deriving (Show, Eq)
+
+type Matrix = V.Vector (V.Vector Int)
 
 instance Hashable Direction where
   hashWithSalt salt Up = hashWithSalt salt (0 :: Int)
@@ -37,13 +39,13 @@ turn Dow = [Lef, Righ]
 turn Lef = [Up, Dow]
 turn Righ = [Up, Dow]
 
-isInBound :: (Int, Int) -> [[Int]] -> Bool
+isInBound :: (Int, Int) -> Matrix -> Bool
 isInBound (x, y) map' =
   let maxX = length map'
-      maxY = length $ head map'
+      maxY = length $ V.head map'
    in x >= 0 && x < maxX && y >= 0 && y < maxY
 
-next :: Vertex -> [Int] -> [[Int]] -> [Vertex]
+next :: Vertex -> [Int] -> Matrix -> [Vertex]
 next (Vertex x y dir) stepRange map' =
   let newPos = [step (x, y) step' dir | step' <- stepRange]
       newPos' = filter (\(x', y') -> isInBound (x', y') map') newPos
@@ -52,20 +54,20 @@ next (Vertex x y dir) stepRange map' =
 
 -- This function shall only be used for adjacent vertices
 -- from -> to -> map -> cost (adj)
-cost :: Vertex -> Vertex -> [[Int]] -> Int
+cost :: Vertex -> Vertex -> Matrix -> Int
 cost (Vertex x y _) (Vertex x' y' _) map'
   | x == x' && y == y' = 0
-  | x == x' = sum $ map (map' !! x !!) $ filter (/= y) [min y y' .. max y y']
-  | y == y' = sum $ map (\x'' -> map' !! x'' !! y) $ filter (/= x) [min x x' .. max x x']
+  | x == x' = sum $ map (map' V.! x V.!) $ filter (/= y) [min y y' .. max y y']
+  | y == y' = sum $ map (\x'' -> map' V.! x'' V.! y) $ filter (/= x) [min x x' .. max x x']
   | otherwise = inf
 
-isFinal :: Vertex -> [[Int]] -> Bool
-isFinal (Vertex x y _) map' = x == length map' - 1 && y == length (head map') - 1
+isFinal :: Vertex -> Matrix -> Bool
+isFinal (Vertex x y _) map' = x == length map' - 1 && y == length (V.head map') - 1
 
-parse :: Text -> [[Int]]
-parse input = map (map digitToInt . T.unpack) $ T.lines input
+parse :: Text -> Matrix
+parse input = V.fromList $ map (V.fromList . map digitToInt . T.unpack) $ T.lines input
 
-dijkstra :: [[Int]] -> [Vertex] -> [Int] -> Int
+dijkstra :: Matrix -> [Vertex] -> [Int] -> Int
 dijkstra map' starts stepRange =
   let hm = HM.empty
       pq = PQ.fromList $ map (0,) starts
