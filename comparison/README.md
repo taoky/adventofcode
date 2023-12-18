@@ -17,7 +17,7 @@ Executed in  433.64 millis    fish           external
    sys time   34.08 millis  704.00 micros   33.37 millis
 ```
 
-Haskell version takes 10s, due to slow `Data.MemoCombinators`.
+[Haskell version](https://github.com/taoky/adventofcode/commit/7b3defeed2cfcb142c4c6efd90fa695662f85ddc) (before manually using Haskell and rewrite the function) takes 10s, due to slow `Data.MemoCombinators`.
 
 ## Day16
 
@@ -32,4 +32,4 @@ Executed in  378.33 millis    fish           external
    sys time   40.02 millis  135.00 micros   39.89 millis
 ```
 
-Haskell version takes 2.5s.
+[Haskell version](https://github.com/taoky/adventofcode/commit/8129a28d61f87001027311d358648c36030b79d6) (before optimizing with Vector) takes 2.5s.
