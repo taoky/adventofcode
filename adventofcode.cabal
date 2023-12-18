@@ -20,6 +20,7 @@ library
       Day14
       Day15
       Day16
+      Day16b
       Day17
       Day18
       Day2
@@ -63,6 +64,7 @@ library
     , base
     , data-memocombinators
     , hashable
+    , hashtables
     , pqueue
     , rio
     , safe
