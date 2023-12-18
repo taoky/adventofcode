@@ -1,4 +1,3 @@
--- A slow impl with IORef and HashTable... Don't know why it is even slower than pure version.
 module Day16b (solve1, solve2) where
 
 import Data.Hashable (hashWithSalt)
