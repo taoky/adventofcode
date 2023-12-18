@@ -1,13 +1,16 @@
 module Day16 (solve1, solve2) where
 
 import Data.Hashable (hashWithSalt)
+import Data.Vector qualified as V
 import RIO
 import RIO.HashSet qualified as HS
-import RIO.List.Partial (head, maximum, (!!))
+import RIO.List.Partial (maximum)
 import RIO.Text qualified as T
 import Prelude (print)
 
 data Direction = Up | Dow | Lef | Righ deriving (Show, Eq)
+
+type Matrix = V.Vector (V.Vector Char)
 
 instance Hashable Direction where
   hashWithSalt salt Up = hashWithSalt salt (0 :: Int)
@@ -15,8 +18,8 @@ instance Hashable Direction where
   hashWithSalt salt Lef = hashWithSalt salt (2 :: Int)
   hashWithSalt salt Righ = hashWithSalt salt (3 :: Int)
 
-parse :: Text -> [[Char]]
-parse input = map T.unpack $ T.lines input
+parse :: Text -> Matrix
+parse input = V.fromList $ map (V.fromList . T.unpack) (T.lines input)
 
 step :: (Int, Int) -> Direction -> (Int, Int)
 step (x, y) Up = (x - 1, y)
@@ -24,16 +27,16 @@ step (x, y) Dow = (x + 1, y)
 step (x, y) Lef = (x, y - 1)
 step (x, y) Righ = (x, y + 1)
 
-isInBound :: (Int, Int) -> [[Char]] -> Bool
+isInBound :: (Int, Int) -> Matrix -> Bool
 isInBound (x, y) map' =
   let maxX = length map'
-      maxY = length $ head map'
+      maxY = length $ V.head map'
    in x >= 0 && x < maxX && y >= 0 && y < maxY
 
-go :: (Int, Int) -> Direction -> [[Char]] -> HashSet ((Int, Int), Direction) -> HashSet ((Int, Int), Direction)
+go :: (Int, Int) -> Direction -> Matrix -> HashSet ((Int, Int), Direction) -> HashSet ((Int, Int), Direction)
 go (x, y) dir map' hs =
   let newHs = HS.insert ((x, y), dir) hs
-      current = map' !! x !! y
+      current = map' V.! x V.! y
       nextDirs = case current of
         '.' -> [dir]
         '/' ->
@@ -66,7 +69,7 @@ go (x, y) dir map' hs =
         then hs -- do not duplicate computing
         else foldl' (\acc dir' -> go (step (x, y) dir') dir' map' acc) newHs nextDirs'
 
-getResult :: [[Char]] -> (Int, Int) -> Direction -> Int
+getResult :: Matrix -> (Int, Int) -> Direction -> Int
 getResult map' (x, y) dir =
   length $ toList $ HS.fromList $ map fst $ toList $ go (x, y) dir map' HS.empty
 
@@ -79,8 +82,8 @@ solve2 :: Text -> IO ()
 solve2 input =
   let map' = parse input
       choices =
-        map (\x -> ((0, x), Dow)) [0 .. length (head map') - 1]
-          ++ map (\x -> ((length map' - 1, x), Up)) [0 .. length (head map') - 1]
+        map (\x -> ((0, x), Dow)) [0 .. length (V.head map') - 1]
+          ++ map (\x -> ((length map' - 1, x), Up)) [0 .. length (V.head map') - 1]
           ++ map (\x -> ((x, 0), Righ)) [0 .. length map' - 1]
-          ++ map (\x -> ((x, length (head map') - 1), Lef)) [0 .. length map' - 1]
+          ++ map (\x -> ((x, length (V.head map') - 1), Lef)) [0 .. length map' - 1]
    in print $ maximum $ map (uncurry (getResult map')) choices
