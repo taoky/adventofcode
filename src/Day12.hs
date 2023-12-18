@@ -40,7 +40,7 @@ fastCount x y hm =
               if isPrefixedByNNonDots firstGroupCount x && (length x == firstGroupCount || (length x > firstGroupCount && x !! firstGroupCount /= '#'))
                 then wrapper' $ fastCount (drop (firstGroupCount + 1) x) (tail y) hm
                 else wrapper 0
-            _ -> do
+            _ ->
               let (r1, hm1) = fastCount ("#" <> tail x) y hm
                   (r2, hm2) = fastCount ("." <> tail x) y hm1
                in wrapper' (r1 + r2, hm2)
