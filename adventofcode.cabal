@@ -64,13 +64,13 @@ library
     , base
     , data-memocombinators
     , hashable
-    , hashtables
     , pqueue
     , rio
     , safe
     , text
     , unordered-containers
     , vector
+    , vector-hashtables
   default-language: GHC2021
 
 executable adventofcode-exe

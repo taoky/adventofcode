@@ -1,16 +1,17 @@
 -- A slow impl with IORef and HashTable... Don't know why it is even slower than pure version.
 module Day16b (solve1, solve2) where
 
--- import RIO.HashSet qualified as HS
-import Data.HashTable.IO qualified as H
 import Data.Hashable (hashWithSalt)
+import Data.Vector qualified as V
+import Data.Vector.Hashtables qualified as H
+import Data.Vector.Mutable qualified as VM
 import Data.Vector.Unboxed qualified as VU
 import RIO hiding (HashSet)
 import RIO.List.Partial (head, maximum)
 import RIO.Text qualified as T
 import Prelude (print)
 
-type HashTable k v = H.BasicHashTable k v
+type HashTable k v = H.Dictionary (H.PrimState IO) VM.MVector k VM.MVector v
 
 type PosDir = ((Int, Int), Direction)
 
@@ -98,12 +99,14 @@ go (x, y) dir map' hsRef = do
 
 getResult :: Matrix -> (Int, Int) -> Direction -> IO Int
 getResult map' (x, y) dir = do
-  hs <- newIORef =<< H.new
+  hs <- newIORef =<< H.initialize 0
   go (x, y) dir map' hs
   hs' <- readIORef hs
-  hsList <- H.toList hs'
-  let pointList = map ((\a -> (fst a, ())) . fst) hsList
-  hs'' :: HashSet (Int, Int) <- H.fromList pointList
+  hsList <- H.keys hs'
+  let pointList = V.map fst hsList
+      lp = length pointList
+  hs'' :: HashSet (Int, Int) <- H.initialize lp
+  V.mapM_ (\a -> H.insert hs'' a ()) pointList
   hs'List <- H.toList hs''
   return $ length hs'List
 
