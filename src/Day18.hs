@@ -28,20 +28,22 @@ parser = do
   pure res
 
 getArea :: [(Direction, Int, Text)] -> (Int, Int) -> Int
-getArea [] _ = 0
-getArea ((dir, step', _) : xs) (x, y) =
-  let nextPoint = step (x, y) dir step'
-   in case dir of
-        Up -> -step' * y + getArea xs nextPoint
-        Dow -> step' * y + getArea xs nextPoint
-        Lef -> getArea xs nextPoint
-        Righ -> getArea xs nextPoint
+getArea l pos = go l pos 0
+  where
+    go [] _ !acc = acc
+    go ((dir, step', _) : xs) (x, y) !acc =
+      let nextPoint = step (x, y) dir step'
+       in case dir of
+            Up -> go xs nextPoint (acc - step' * y)
+            Dow -> go xs nextPoint (acc + step' * y)
+            Lef -> go xs nextPoint acc
+            Righ -> go xs nextPoint acc
 
 getCircumference :: [(Direction, Int, Text)] -> Int
-getCircumference [] = 0
-getCircumference ((_, step', _) : xs) =
-  let
-   in step' + getCircumference xs
+getCircumference l = go l 0
+  where
+    go [] !acc = acc
+    go ((_, step', _) : xs) !acc = go xs (acc + step')
 
 parseHex :: Text -> (Direction, Int)
 parseHex input =
