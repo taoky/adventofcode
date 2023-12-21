@@ -21,6 +21,7 @@ import Day17 qualified
 import Day18 qualified
 import Day19 qualified
 import Day20 qualified
+import Day21 qualified
 import Options.Applicative
 import RIO
 import Prelude (putStrLn)
@@ -81,7 +82,8 @@ dayToModule =
     (17, [Day17.solve1, Day17.solve2]),
     (18, [Day18.solve1, Day18.solve2]),
     (19, [Day19.solve1, Day19.solve2]),
-    (20, [Day20.solve1, Day20.solve2])
+    (20, [Day20.solve1, Day20.solve2]),
+    (21, [Day21.solve1, Day21.solve2])
   ]
 
 getFileName :: Int -> Bool -> String
