@@ -1,6 +1,7 @@
 module Day21 (solve1, solve2) where
 
 import Data.Vector qualified as V
+import Data.MemoUgly qualified as M
 import RIO
 import RIO.HashSet qualified as HS
 import RIO.List.Partial (head, (!!))
@@ -69,16 +70,57 @@ step2 map' positions =
       positions'' = filter (isFeasible2 map') (HS.toList $ HS.fromList positions')
    in positions''
 
-applyStep2 :: Int -> Matrix -> [(Int, Int)] -> [(Int, Int)]
-applyStep2 0 _ positions = positions
-applyStep2 n map' positions = applyStep2 (n - 1) map' (step2 map' positions)
+-- applyStep2 :: Int -> Matrix -> [(Int, Int)] -> [(Int, Int)]
+-- applyStep2 0 _ positions = positions
+-- applyStep2 n map' positions = applyStep2 (n - 1) map' (step2 map' positions)
 
 solve1 :: Text -> IO ()
 solve1 input =
   let (map', start) = parse input
    in print $ length $ applyStep1 64 map' [start]
 
+-- solving ax^2 + bx + c = 0
+cramer :: (Int, Int) -> (Int, Int) -> (Int, Int) -> (Double, Double, Double)
+cramer (x1, y1) (x2, y2) (x3, y3) =
+  let matrix = V.fromList [V.fromList [x1 * x1, x1, 1, y1], V.fromList [x2 * x2, x2, 1, y2], V.fromList [x3 * x3, x3, 1, y3]]
+      d =
+        fromIntegral
+          $ (matrix V.! 0 V.! 0 * (matrix V.! 1 V.! 1 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 1))
+          - (matrix V.! 0 V.! 1 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 0))
+          + (matrix V.! 0 V.! 2 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 1 - matrix V.! 1 V.! 1 * matrix V.! 2 V.! 0))
+      da =
+        fromIntegral
+          $ (matrix V.! 0 V.! 3 * (matrix V.! 1 V.! 1 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 1))
+          - (matrix V.! 0 V.! 1 * (matrix V.! 1 V.! 3 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 3))
+          + (matrix V.! 0 V.! 2 * (matrix V.! 1 V.! 3 * matrix V.! 2 V.! 1 - matrix V.! 1 V.! 1 * matrix V.! 2 V.! 3))
+      db =
+        fromIntegral
+          $ (matrix V.! 0 V.! 0 * (matrix V.! 1 V.! 3 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 3))
+          - (matrix V.! 0 V.! 3 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 2 - matrix V.! 1 V.! 2 * matrix V.! 2 V.! 0))
+          + (matrix V.! 0 V.! 2 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 3 - matrix V.! 1 V.! 3 * matrix V.! 2 V.! 0))
+      dc =
+        fromIntegral
+          $ (matrix V.! 0 V.! 0 * (matrix V.! 1 V.! 1 * matrix V.! 2 V.! 3 - matrix V.! 1 V.! 3 * matrix V.! 2 V.! 1))
+          - (matrix V.! 0 V.! 1 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 3 - matrix V.! 1 V.! 3 * matrix V.! 2 V.! 0))
+          + (matrix V.! 0 V.! 3 * (matrix V.! 1 V.! 0 * matrix V.! 2 V.! 1 - matrix V.! 1 V.! 1 * matrix V.! 2 V.! 0))
+   in (da / d, db / d, dc / d)
+
+-- Observations:
+-- Grid is 131x131
+-- No Rock in starting row and column
+-- Starting position is at (65, 65), aka, center
+-- 26501365 = 131 * 202300 + 65
+-- for every x which x % 65 == 131, it forms a quadratic function
 solve2 :: Text -> IO ()
 solve2 input =
   let (map', start) = parse input
-   in print "too slow" -- $ length $ applyStep2 1000 map' [start]
+      applyStep2 :: Int -> [(Int, Int)] -> [(Int, Int)]
+      applyStep2 0 positions = positions
+      applyStep2 n positions = applyStep2Memo (n - 1) (step2 map' positions)
+      applyStep2Memo = M.memo applyStep2
+      points = map (\i -> let v = 65 + 131 * i in (v, length $ applyStep2Memo v [start])) [0 .. 2]
+      x = 26501365
+   in print
+        $ (round :: Double -> Int64)
+        $ (\(a, b, c) -> a * x * x + b * x + c)
+        $ cramer (points !! 0) (points !! 1) (points !! 2)
