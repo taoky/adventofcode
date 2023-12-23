@@ -6,7 +6,7 @@ import RIO
 import RIO.HashSet qualified as HS
 import RIO.List qualified as L
 import RIO.List.Partial (head)
-import Utils
+-- import Utils
 import Prelude (print)
 
 data Item = Item {start :: (Int, Int, Int), end :: (Int, Int, Int)} deriving (Show, Eq)
@@ -67,6 +67,16 @@ gravity blocks =
               Just lower'' -> if isSupporting x xs then x : xs else gravityOnOne xs lower''
    in foldl' gravityOnOne [] blocks
 
+gravityWithCounter :: [Item] -> [Item] -> (Int, [Item])
+gravityWithCounter inits blocks =
+  let gravityOnOne (counter, xs) x =
+        let lower' = lower x
+         in case lower' of
+              Nothing -> (counter, x : xs)
+              -- Here we don't need to put block to lowest: just get block number that will be moved
+              Just _ -> if isSupporting x xs then (counter, x : xs) else (counter + 1, xs)
+   in foldl' gravityOnOne (0, inits) blocks
+
 solve1 :: Text -> IO ()
 solve1 input =
   let blocks = case P.parseOnly parser input of
@@ -78,12 +88,17 @@ solve1 input =
       go [] hs = hs
       go (x : xs) hs =
         let supporting = getSupporting x xs
-            -- minZ = (\(_, _, z) -> z) $ start x
-         in -- assert' (not (null supporting) || minZ == 1) $ 
+         in -- minZ = (\(_, _, z) -> z) $ start x
+            -- assert' (not (null supporting) || minZ == 1) $
             if length supporting == 1
               then go xs (HS.insert (head supporting) hs)
               else go xs hs
    in print (length fallenBlocks - length (go revFallenBlocks HS.empty))
 
 solve2 :: Text -> IO ()
-solve2 input = print "TODO"
+solve2 input =
+  let blocks = case P.parseOnly parser input of
+        Left err -> error err
+        Right res -> res
+      fallenBlocks = itemSort $ gravity blocks
+   in print $ sum $ [fst $ gravityWithCounter xs ys | (xs, ys) <- zip (L.inits fallenBlocks) (drop 1 $ L.tails fallenBlocks)]
