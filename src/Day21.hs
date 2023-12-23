@@ -1,7 +1,7 @@
 module Day21 (solve1, solve2) where
 
+import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
-import Data.MemoUgly qualified as M
 import RIO
 import RIO.HashSet qualified as HS
 import RIO.List.Partial (head, (!!))
@@ -54,25 +54,65 @@ parse input =
       start' = assert' (length start == 1) $ head start
    in (map', start')
 
+dedupWithFilter :: [(Int, Int)] -> ((Int, Int) -> Bool) -> [(Int, Int)]
+dedupWithFilter positions ffunc = toList $ HS.filter ffunc (HS.fromList positions)
+
 step1 :: Matrix -> [(Int, Int)] -> [(Int, Int)]
 step1 map' positions =
   let positions' = map (`walk` Up) positions <> map (`walk` Dow) positions <> map (`walk` Lef) positions <> map (`walk` Righ) positions
-      positions'' = filter (isFeasible map') (HS.toList $ HS.fromList positions')
+      positions'' = dedupWithFilter positions' (isFeasible map')
    in positions''
 
 applyStep1 :: Int -> Matrix -> [(Int, Int)] -> [(Int, Int)]
 applyStep1 0 _ positions = positions
 applyStep1 n map' positions = applyStep1 (n - 1) map' (step1 map' positions)
 
-step2 :: Matrix -> [(Int, Int)] -> [(Int, Int)]
-step2 map' positions =
-  let positions' = map (`walk` Up) positions <> map (`walk` Dow) positions <> map (`walk` Lef) positions <> map (`walk` Righ) positions
-      positions'' = filter (isFeasible2 map') (HS.toList $ HS.fromList positions')
-   in positions''
+-- correct but slow
+-- step2 :: Matrix -> [(Int, Int)] -> [(Int, Int)]
+-- step2 map' positions =
+--   let positions' = map (`walk` Up) positions <> map (`walk` Dow) positions <> map (`walk` Lef) positions <> map (`walk` Righ) positions
+--       positions'' = dedupWithFilter positions' (isFeasible2 map')
+--    in positions''
 
 -- applyStep2 :: Int -> Matrix -> [(Int, Int)] -> [(Int, Int)]
 -- applyStep2 0 _ positions = positions
 -- applyStep2 n map' positions = applyStep2 (n - 1) map' (step2 map' positions)
+
+-- memo does not help
+-- applyStep2Memo :: Int -> Matrix -> [(Int, Int)] -> HashMap Int [(Int, Int)] -> ([(Int, Int)], HashMap Int [(Int, Int)])
+-- applyStep2Memo 0 _ positions memo = (positions, memo)
+-- applyStep2Memo n map' positions memo =
+--   case HM.lookup n memo of
+--     Just positions' -> (positions', memo)
+--     Nothing ->
+--       let (positions', memo') = applyStep2Memo (n - 1) map' (step2 map' positions) memo
+--        in (positions', HM.insert n positions' memo')
+
+-- wrong algorithm
+-- applyStep2 :: Int -> Matrix -> (Int, Int) -> [(Int, Int)]
+-- applyStep2 n map' (xstart, ystart) =
+--   let isMarkOdd = if even (xstart + ystart) then odd n else even n
+--       go n' expand =
+--         let points = [(xstart - n', ystart), (xstart + n', ystart)]
+--             oddFilter x y = let z = x + y in if isMarkOdd then odd z else even z
+--             checkPoints x y = filter (uncurry oddFilter) [(x, y + offset) | offset <- [-expand .. expand]]
+--           in concatMap (uncurry checkPoints) points
+--     in dedupWithFilter (concatMap (\i -> go i (n - i)) [0 .. n]) (isFeasible2 map')
+
+-- BFS
+applyStep2 :: Int -> Matrix -> (Int, Int) -> HS.HashSet (Int, Int)
+applyStep2 n map' start =
+  let bfs :: Seq.Seq ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int)
+      bfs q h = case Seq.viewl q of
+        Seq.EmptyL -> h
+        ((x, y), steps) Seq.:< q' ->
+          let points = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+              points' = filter (isFeasible2 map') points
+              q'' = foldl' (\q_ p -> if steps > 0 then q_ Seq.|> (p, steps - 1) else q_) q' points'
+           in if HS.member ((x, y), steps) h then bfs q' h else bfs q'' (HS.insert ((x, y), steps) h)
+   in HS.map (\((a, b), _) -> (a, b))
+        $ HS.filter (\((_, _), c) -> c == 0)
+        $ bfs (Seq.singleton (start, n)) HS.empty
 
 solve1 :: Text -> IO ()
 solve1 input =
@@ -111,14 +151,12 @@ cramer (x1, y1) (x2, y2) (x3, y3) =
 -- Starting position is at (65, 65), aka, center
 -- 26501365 = 131 * 202300 + 65
 -- for every x which x % 65 == 131, it forms a quadratic function
+-- Thanks for relevant hint from reddit
 solve2 :: Text -> IO ()
 solve2 input =
   let (map', start) = parse input
-      applyStep2 :: Int -> [(Int, Int)] -> [(Int, Int)]
-      applyStep2 0 positions = positions
-      applyStep2 n positions = applyStep2Memo (n - 1) (step2 map' positions)
-      applyStep2Memo = M.memo applyStep2
-      points = map (\i -> let v = 65 + 131 * i in (v, length $ applyStep2Memo v [start])) [0 .. 2]
+      -- in print $ length $ applyStep2 100 map' start
+      points = map (\i -> let v = 65 + 131 * i in (v, length $ applyStep2 v map' start)) [0 .. 2]
       x = 26501365
    in print
         $ (round :: Double -> Int64)

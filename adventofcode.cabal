@@ -65,6 +65,7 @@ library
   build-depends:
       attoparsec
     , base
+    , containers
     , hashable
     , pqueue
     , rio
