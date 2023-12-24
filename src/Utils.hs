@@ -1,4 +1,4 @@
-module Utils (stringToUnsigned, charListToUnsigned, assert', splitTwo, stringToSigned) where
+module Utils (stringToUnsigned, charListToUnsigned, assert', splitTwo, stringToSigned, fst3, snd3, thd3) where
 
 import Data.Text qualified as DT
 import Data.Text.Read (decimal, signed)
@@ -26,3 +26,12 @@ splitTwo sep str =
   case DT.splitOn sep str of
     (one : two) -> assert' (length two == 1) (one, head two)
     _ -> error "splitTwo: empty"
+
+fst3 :: (a, b, c) -> a
+fst3 (x, _, _) = x
+
+snd3 :: (a, b, c) -> b
+snd3 (_, y, _) = y
+
+thd3 :: (a, b, c) -> c
+thd3 (_, _, z) = z

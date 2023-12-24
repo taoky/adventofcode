@@ -13,6 +13,7 @@ library:
     - pqueue
     - containers
     - vector-hashtables
+    - vector-th-unbox
 
 executables:
   adventofcode-exe:
