@@ -73,6 +73,7 @@ library
     , pqueue
     , rio
     , safe
+    , sbv
     , text
     , uglymemo
     , unordered-containers

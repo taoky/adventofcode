@@ -3,7 +3,9 @@ module Day24 (solve1, solve2) where
 import Data.Attoparsec.Text qualified as P
 import RIO
 import RIO.List qualified as L
+import Data.SBV qualified as SBV
 import Prelude (print)
+import Data.Maybe (fromJust)
 
 data HailStone = HailStone {x :: Int, y :: Int, z :: Int, vx :: Int, vy :: Int, vz :: Int} deriving (Show, Eq)
 
@@ -54,6 +56,22 @@ cross1 HailStone {x = x1, y = y1, vx = vx1, vy = vy1} HailStone {x = x2, y = y2,
 pairs :: [a] -> [(a, a)]
 pairs lst = [(x, y) | (x : ys) <- L.tails lst, y <- ys]
 
+-- sReal is much faster than sInt64
+sat :: [HailStone] -> IO SBV.SatResult
+sat hailstones = SBV.sat $ do
+    x <- SBV.sReal "x"
+    y <- SBV.sReal "y"
+    z <- SBV.sReal "z"
+    vx <- SBV.sReal "vx"
+    vy <- SBV.sReal "vy"
+    vz <- SBV.sReal "vz"
+    for_ hailstones $ \HailStone {x = x', y = y', z = z', vx = vx', vy = vy', vz = vz'} -> do
+      t <- SBV.sReal "t"
+      SBV.constrain $ t SBV..> 0
+      SBV.constrain $ x + vx * t SBV..== fromIntegral x' + t * fromIntegral vx'
+      SBV.constrain $ y + vy * t SBV..== fromIntegral y' + t * fromIntegral vy'
+      SBV.constrain $ z + vz * t SBV..== fromIntegral z' + t * fromIntegral vz'
+
 solve1 :: Text -> IO ()
 solve1 input =
   let hailStones = case P.parseOnly parser input of
@@ -72,4 +90,12 @@ solve1 input =
         $ pairs hailStones
 
 solve2 :: Text -> IO ()
-solve2 input = print "TODO"
+solve2 input = do
+    let hailStones = case P.parseOnly parser input of
+            Left err -> error err
+            Right res -> res
+    result <- sat hailStones
+    let x :: SBV.AlgReal = fromJust $ SBV.getModelValue "x" result
+        y = fromJust $ SBV.getModelValue "y" result
+        z = fromJust $ SBV.getModelValue "z" result
+    print $ (round :: Double -> Int) $ fromRational $ toRational (x + y + z)

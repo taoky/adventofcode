@@ -14,6 +14,7 @@ library:
     - containers
     - vector-hashtables
     - vector-th-unbox
+    - sbv
 
 executables:
   adventofcode-exe:
