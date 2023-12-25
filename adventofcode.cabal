@@ -30,6 +30,7 @@ library
       Day22
       Day23
       Day24
+      Day25
       Day3
       Day4
       Day5
@@ -69,6 +70,7 @@ library
       attoparsec
     , base
     , containers
+    , fgl
     , hashable
     , pqueue
     , rio

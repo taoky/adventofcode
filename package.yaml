@@ -15,6 +15,7 @@ library:
     - vector-hashtables
     - vector-th-unbox
     - sbv
+    - fgl
 
 executables:
   adventofcode-exe:
