@@ -8,8 +8,8 @@ import RIO
 import RIO.HashMap qualified as HM
 import RIO.HashMap.Partial qualified as HM'
 import RIO.HashSet qualified as HS
-import RIO.List.Partial (head)
 import RIO.List qualified as L
+import RIO.List.Partial (head)
 import RIO.Text qualified as T
 import Utils
 import Prelude (print)
