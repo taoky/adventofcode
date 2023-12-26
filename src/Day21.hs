@@ -68,11 +68,11 @@ applyStep1 0 _ positions = positions
 applyStep1 n map' positions = applyStep1 (n - 1) map' (step1 map' positions)
 
 -- correct but slow
--- step2 :: Matrix -> [(Int, Int)] -> [(Int, Int)]
--- step2 map' positions =
---   let positions' = map (`walk` Up) positions <> map (`walk` Dow) positions <> map (`walk` Lef) positions <> map (`walk` Righ) positions
---       positions'' = dedupWithFilter positions' (isFeasible2 map')
---    in positions''
+step1' :: Matrix -> [(Int, Int)] -> [(Int, Int)]
+step1' map' positions =
+  let positions' = map (`walk` Up) positions <> map (`walk` Dow) positions <> map (`walk` Lef) positions <> map (`walk` Righ) positions
+      positions'' = dedupWithFilter positions' (isFeasible2 map')
+   in positions''
 
 -- applyStep2 :: Int -> Matrix -> [(Int, Int)] -> [(Int, Int)]
 -- applyStep2 0 _ positions = positions
@@ -99,20 +99,40 @@ applyStep1 n map' positions = applyStep1 (n - 1) map' (step1 map' positions)
 --           in concatMap (uncurry checkPoints) points
 --     in dedupWithFilter (concatMap (\i -> go i (n - i)) [0 .. n]) (isFeasible2 map')
 
--- BFS
+-- BFS, even slower
+-- applyStep2 :: Int -> Matrix -> (Int, Int) -> HS.HashSet (Int, Int)
+-- applyStep2 n map' start =
+--   let bfs :: Seq.Seq ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int)
+--       bfs q h = case Seq.viewl q of
+--         Seq.EmptyL -> h
+--         ((x, y), steps) Seq.:< q' ->
+--           let points = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+--               points' = filter (isFeasible2 map') points
+--               q'' = foldl' (\q_ p -> if steps > 0 then q_ Seq.|> (p, steps - 1) else q_) q' points'
+--            in if HS.member ((x, y), steps) h then bfs q' h else bfs q'' (HS.insert ((x, y), steps) h)
+--    in HS.map (\((a, b), _) -> (a, b))
+--         $ HS.filter (\((_, _), c) -> c == 0)
+--         $ bfs (Seq.singleton (start, n)) HS.empty
+
+-- hashset (all reached points, new points)
+-- go 2 steps at a time
+-- from https://www.reddit.com/r/haskell/comments/18nf2do/comment/kebjlfd/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button
+step2 :: Matrix -> (HS.HashSet (Int, Int), HS.HashSet (Int, Int)) -> (HS.HashSet (Int, Int), HS.HashSet (Int, Int))
+step2 matrix (allReached, newReached) =
+  let extended = HS.toList newReached >>= (\x -> step1' matrix [x]) >>= (\x -> step1' matrix [x])
+      newReached' = HS.fromList $ filter (not . (`HS.member` allReached)) extended
+   in (HS.union allReached newReached', newReached')
+
 applyStep2 :: Int -> Matrix -> (Int, Int) -> HS.HashSet (Int, Int)
-applyStep2 n map' start =
-  let bfs :: Seq.Seq ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int) -> HS.HashSet ((Int, Int), Int)
-      bfs q h = case Seq.viewl q of
-        Seq.EmptyL -> h
-        ((x, y), steps) Seq.:< q' ->
-          let points = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
-              points' = filter (isFeasible2 map') points
-              q'' = foldl' (\q_ p -> if steps > 0 then q_ Seq.|> (p, steps - 1) else q_) q' points'
-           in if HS.member ((x, y), steps) h then bfs q' h else bfs q'' (HS.insert ((x, y), steps) h)
-   in HS.map (\((a, b), _) -> (a, b))
-        $ HS.filter (\((_, _), c) -> c == 0)
-        $ bfs (Seq.singleton (start, n)) HS.empty
+applyStep2 n matrix start =
+  let go :: Int -> (HS.HashSet (Int, Int), HS.HashSet (Int, Int)) -> (HS.HashSet (Int, Int), HS.HashSet (Int, Int))
+      go 0 reached = reached
+      go 1 _ = error "go only accepts even number"
+      go n_ reached = go (n_ - 2) (step2 matrix reached)
+      start' = if even n then [start] else step1' matrix [start]
+      n' = if even n then n else n - 1
+      (res, _) = go n' (HS.fromList start', HS.fromList start')
+   in res
 
 solve1 :: Text -> IO ()
 solve1 input =
