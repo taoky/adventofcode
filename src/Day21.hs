@@ -1,6 +1,5 @@
 module Day21 (solve1, solve2) where
 
-import Data.Sequence qualified as Seq
 import Data.Vector qualified as V
 import RIO
 import RIO.HashSet qualified as HS
