@@ -1,7 +1,8 @@
 // A copy of Haskell version's algorithm
 use std::{
+    collections::HashMap,
     fs::File,
-    io::{BufRead, BufReader}, collections::HashMap,
+    io::{BufRead, BufReader},
 };
 
 type Num = u64;

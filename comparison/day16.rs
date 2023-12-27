@@ -1,7 +1,8 @@
 // A copy of Haskell version's algorithm
 use std::{
+    collections::HashSet,
     fs::File,
-    io::{BufRead, BufReader}, collections::HashSet,
+    io::{BufRead, BufReader},
 };
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
@@ -9,10 +10,15 @@ enum Direction {
     Up,
     Down,
     Left,
-    Right
+    Right,
 }
 
-fn get_result(map: &Vec<Vec<char>>, start: (usize, usize), direction: Direction, mut hs: &mut HashSet<((usize, usize), Direction)>) {
+fn get_result(
+    map: &Vec<Vec<char>>,
+    start: (usize, usize),
+    direction: Direction,
+    mut hs: &mut HashSet<((usize, usize), Direction)>,
+) {
     if hs.contains(&(start, direction)) {
         return;
     }
@@ -44,7 +50,7 @@ fn get_result(map: &Vec<Vec<char>>, start: (usize, usize), direction: Direction,
             Direction::Left => vec![Direction::Up, Direction::Down],
             Direction::Right => vec![Direction::Up, Direction::Down],
         },
-        _ => unreachable!()
+        _ => unreachable!(),
     };
     for next_dir in next_dirs {
         let next = match next_dir {
@@ -70,7 +76,7 @@ fn main() {
         let items: Vec<char> = line.chars().collect();
         map.push(items);
     }
-    
+
     let height = map.len();
     let width = map[0].len();
     let mut choices = vec![];
