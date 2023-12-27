@@ -70,11 +70,10 @@ gravity blocks =
 gravityWithCounter :: [Item] -> [Item] -> (Int, [Item])
 gravityWithCounter inits blocks =
   let gravityOnOne (counter, xs) x =
-        let lower' = lower x
-         in case lower' of
-              Nothing -> (counter, x : xs)
-              -- Here we don't need to put block to lowest: just get block number that will be moved
-              Just _ -> if isSupporting x xs then (counter, x : xs) else (counter + 1, xs)
+        let z = (\(_, _, z') -> z') $ start x
+         in if isSupporting x xs || z <= 1
+              then (counter, x : xs)
+              else (counter + 1, xs)
    in foldl' gravityOnOne (0, inits) blocks
 
 solve1 :: Text -> IO ()

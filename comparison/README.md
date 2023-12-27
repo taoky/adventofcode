@@ -33,3 +33,19 @@ Executed in  378.33 millis    fish           external
 ```
 
 [Haskell version](https://github.com/taoky/adventofcode/commit/8129a28d61f87001027311d358648c36030b79d6) (before optimizing with Vector) takes 2.5s.
+
+## Day22
+
+```console
+> rustc -O day22.rs
+> time ./day22
+522
+83519
+
+________________________________________________________
+Executed in  372.63 millis    fish           external
+   usr time  368.80 millis  653.00 micros  368.14 millis
+   sys time    3.47 millis  184.00 micros    3.29 millis
+```
+
+Haskell version takes ~1.4s.
