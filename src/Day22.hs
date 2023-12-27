@@ -47,24 +47,40 @@ isXYCovering (Item (x1, y1, _) (x2, y2, _)) (Item (x1', y1', _) (x2', y2', _)) =
 getSupporting :: Item -> [Item] -> [Item]
 getSupporting item underItems =
   let (_, _, itemMinZ) = start item
-      satisfying = filter (\i -> let (_, _, z) = end i in z + 1 == itemMinZ) underItems
-   in -- trace (tshow (satisfying, item, underItems)) $
-      filter (isXYCovering item) satisfying
+   in filter (\i -> let (_, _, z) = end i in z == itemMinZ - 1 && isXYCovering item i) underItems
 
 isSupporting :: Item -> [Item] -> Bool
 isSupporting item underItems = not $ null $ getSupporting item underItems
 
-lower :: Item -> Maybe Item
-lower (Item (x1, y1, z1) (x2, y2, z2)) =
-  if z1 > 1 then Just $ Item (x1, y1, z1 - 1) (x2, y2, z2 - 1) else Nothing
+getGap :: Item -> [Item] -> Int
+getGap item underItems =
+  let (_, _, itemMinZ) = start item
+      interesting = filter (isXYCovering item) underItems
+      maxZinInteresting = L.maximumMaybe $ map (\i -> let (_, _, z) = end i in z) interesting
+    in case maxZinInteresting of
+         Nothing -> itemMinZ - 1
+         Just maxZinInteresting' -> itemMinZ - maxZinInteresting' - 1
+
+-- lower :: Item -> Maybe Item
+-- lower = lowerN 1
+
+lowerN :: Int -> Item -> Maybe Item
+lowerN 0 item = Just item
+lowerN n (Item (x1, y1, z1) (x2, y2, z2)) =
+  if z1 > n then Just $ Item (x1, y1, z1 - n) (x2, y2, z2 - n) else Nothing
 
 gravity :: [Item] -> [Item]
 gravity blocks =
   let gravityOnOne xs x =
-        let lower' = lower x
-         in case lower' of
-              Nothing -> x : xs
-              Just lower'' -> if isSupporting x xs then x : xs else gravityOnOne xs lower''
+        let gap = getGap x xs
+        in case lowerN gap x of
+             Nothing -> error "unexpected here: it should always be able to lower"
+             Just lower' -> lower' : xs
+        -- Slow (takes most of the time)
+        -- let lower' = lower x
+        --  in case lower' of
+        --       Nothing -> x : xs
+        --       Just lower'' -> if isSupporting x xs then x : xs else gravityOnOne xs lower''
    in foldl' gravityOnOne [] blocks
 
 gravityWithCounter :: [Item] -> [Item] -> (Int, [Item])

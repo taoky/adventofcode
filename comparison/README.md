@@ -17,7 +17,7 @@ Executed in  433.64 millis    fish           external
    sys time   34.08 millis  704.00 micros   33.37 millis
 ```
 
-[Haskell version](https://github.com/taoky/adventofcode/commit/7b3defeed2cfcb142c4c6efd90fa695662f85ddc) (before manually using Haskell and rewrite the function) takes 10s, due to slow `Data.MemoCombinators`.
+[Haskell version](https://github.com/taoky/adventofcode/blob/7b3defeed2cfcb142c4c6efd90fa695662f85ddc/src/Day12.hs) (before manually using Haskell and rewrite the function) takes 10s, due to slow `Data.MemoCombinators`.
 
 ## Day16
 
@@ -32,7 +32,7 @@ Executed in  378.33 millis    fish           external
    sys time   40.02 millis  135.00 micros   39.89 millis
 ```
 
-[Haskell version](https://github.com/taoky/adventofcode/commit/8129a28d61f87001027311d358648c36030b79d6) (before optimizing with Vector) takes 2.5s.
+[Haskell version](https://github.com/taoky/adventofcode/blob/8129a28d61f87001027311d358648c36030b79d6/src/Day16.hs) (before optimizing with Vector) takes 2.5s.
 
 ## Day22
 
@@ -48,4 +48,4 @@ Executed in  372.63 millis    fish           external
    sys time    3.47 millis  184.00 micros    3.29 millis
 ```
 
-Haskell version takes ~1.4s.
+[Haskell version before optimizing `fallenBlocks` calc](https://github.com/taoky/adventofcode/blob/8dcd08d219c6b8b65d6c6b7306acf7a33ad5b926/src/Day22.hs) takes ~1.4s.
