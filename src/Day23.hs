@@ -1,5 +1,6 @@
 module Day23 (solve1, solve2) where
 
+import Control.Parallel.Strategies (parMap, rdeepseq)
 import Data.Hashable (hashWithSalt)
 import Data.Sequence qualified as Seq
 import Data.Vector.Unboxed qualified as VU
@@ -11,6 +12,7 @@ import RIO.HashSet qualified as HS
 import RIO.List qualified as L
 import RIO.List.Partial (head)
 import RIO.Text qualified as T
+import Safe (maximumDef)
 import Utils
 import Prelude (print)
 
@@ -180,30 +182,29 @@ makeJunctionGraph start matrix =
                          in bfs q' h' g''
    in snd $ bfs (Seq.singleton (start, Dow)) HS.empty HM.empty
 
+parallelArg :: Int
+parallelArg = 4
+
 -- new dfs with junction graph
 dfs' :: Graph -> (Int, Int) -> (Int -> Bool) -> Int
 dfs' graph start isEnd =
-  go start HS.empty 0
+  go start HS.empty 0 0
   where
-    go :: (Int, Int) -> HS.HashSet (Int, Int) -> Int -> Int
-    go (x, y) hs acc =
+    go :: (Int, Int) -> HS.HashSet (Int, Int) -> Int -> Int -> Int
+    go (x, y) hs acc depth =
       let goto = HM.lookupDefault [] (x, y) graph
           goto' = filter (\i -> not $ HS.member (fst i) hs) goto
           hs' = HS.insert (x, y) hs
+          l =
+            if depth < parallelArg
+              then parMap rdeepseq (\i -> go (fst i) hs' (acc + snd i) (depth + 1)) goto'
+              else map (\i -> go (fst i) hs' (acc + snd i) (depth + 1)) goto'
        in if isEnd x
             then acc
             else case goto' of
               -- dead end, this shall not be counted in
               [] -> -1
-              _ ->
-                foldl'
-                  ( \acc' i ->
-                      let res = go (fst i) hs' (acc + snd i)
-                          maxAcc = if res == -1 then acc' else max acc' res
-                       in maxAcc
-                  )
-                  0
-                  goto'
+              _ -> l & filter (/= -1) & maximumDef 0
 
 solve1 :: Text -> IO ()
 solve1 input =

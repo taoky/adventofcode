@@ -16,6 +16,7 @@ library:
     - vector-th-unbox
     - sbv
     - fgl
+    - parallel
 
 executables:
   adventofcode-exe:

@@ -72,6 +72,7 @@ library
     , containers
     , fgl
     , hashable
+    , parallel
     , pqueue
     , rio
     , safe
